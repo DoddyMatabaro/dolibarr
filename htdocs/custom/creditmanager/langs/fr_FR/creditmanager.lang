@@ -3,3 +3,12 @@ Module560000Name=Credit Manager
 Module560000Desc=Gestion des crédits heures (types, soldes, débit timesheets)
 
 CreditManager=Credit Manager
+CreditManagerAttribution=Credit Manager - Attributions
+CreditManagerNewAttribution=Nouvelle attribution de crédits
+CreditManagerBatchAttribution=Attribution de crédits en lot
+CreditManagerClientBalances=Soldes de crédits client
+CreditManagerImportAttributionsCSV=Importer des attributions de crédits (CSV)
+CreditManagerAttributionHistory=Historique des attributions
+CreditManagerAttributionAdjustment=Ajustement d'attribution
+CreditManagerAttributionCancel=Annulation d'attribution
+CreditManagerConfirmDeleteAttribution=Confirmez-vous l'annulation de cette attribution de crédits ?
