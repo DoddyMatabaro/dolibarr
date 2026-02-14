@@ -34,6 +34,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
 require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
 require_once DOL_DOCUMENT_ROOT . '/custom/creditmanager/class/CreditType.class.php';
+dol_include_once('/creditmanager/lib/creditmanager.lib.php');
 
 // Load translation files
 $langs->loadLangs(array('admin', 'errors', 'companies', 'creditmanager@creditmanager'));
@@ -601,6 +602,9 @@ llxHeader('', $langs->trans('CreditManagerAttribution'), '', '', 0, 0, '', '', '
 $linkback = '<a href="' . DOL_URL_ROOT . '/admin/modules.php">' . $langs->trans('BackToModuleList') . '</a>';
 print load_fiche_titre($langs->trans('CreditManagerAttribution'), $linkback, 'title_setup');
 
+$head = creditmanagerAdminPrepareHead();
+print dol_get_fiche_head($head, 'attribution', $langs->trans('CreditManager'), -1, 'creditmanager@creditmanager');
+
 print '<div class="fichecenter">';
 print '<div class="fichethirdleft">';
 
@@ -1032,6 +1036,8 @@ if ($action === 'delete' && $attrid > 0) {
     );
     print $formconfirm;
 }
+
+print dol_get_fiche_end();
 
 llxFooter();
 $db->close();
