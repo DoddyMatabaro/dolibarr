@@ -3,6 +3,71 @@ Module560000Name=Credit Manager
 Module560000Desc=Manage credit hours (types, balances, timesheet debit)
 
 CreditManager=Credit Manager
+
+#
+# Menus
+#
+CreditManagerDashboard=Dashboard
+CreditBalances=Balances
+CreditMovements=Movements
+CreditAlerts=Alerts
+CreditManagerSetup=Setup
+CreditManagerDashboardDescription=Welcome to Credit Manager. Use the sidebar to navigate between balances, movements and alerts.
+CreditManagerStatsPlaceholder=Statistics will be displayed here once data is available.
+Statistics=Statistics
+
+#
+# Admin tabs
+#
+Settings=Settings
+CreditTypes=Credit Types
+CreditAttribution=Credit Attribution
+
+#
+# Credit Types management
+#
+CreditTypesManagement=Credit Types Management
+CreditTypesList=Credit Types List
+NewCreditType=New Credit Type
+EditCreditType=Edit Credit Type
+DeleteCreditType=Delete Credit Type
+CreditTypeCodeHelp=Unique alphanumeric code (e.g. SUPPORT_HOURS, PROJECT_HOURS)
+
+#
+# Debit mode
+#
+DebitMode=Debit Mode
+ImmediateDebit=Immediate
+ImmediateDebitDesc=Debited on PM approval
+DelayedDebit=Delayed
+DelayedDebitDesc=Auto-debited after X days
+ManualDebit=Manual
+ManualDebitDesc=Manual debit only
+DebitDelayDays=Debit Delay
+DebitDelayDaysUnit=days after approval
+DaysShort=d
+
+#
+# Units
+#
+Hours=Hours
+Days=Days
+Credits=Credits
+
+#
+# Status & messages
+#
+CreditTypeCreated=Credit type created successfully
+CreditTypeUpdated=Credit type updated successfully
+CreditTypeDeleted=Credit type deleted successfully
+CreditTypeDeactivated=Credit type has been deactivated (used in existing records)
+CreditTypeActivated=Credit type activated
+CreditTypeDisabled=Credit type disabled
+ConfirmDeleteCreditType=Are you sure you want to delete credit type <strong>%s</strong>?
+CreditTypeUsedWillBeDeactivated=This credit type is used in existing movements or balances. It will be deactivated instead of deleted.
+ErrorCodeAlreadyExists=The code '%s' already exists. Please use a unique code.
+ExportCSV=Export CSV
+RecordsDeleted=%s record(s) deleted
 CreditManagerAttribution=Credit Manager - Attribution
 CreditManagerNewAttribution=New credit attribution
 CreditManagerBatchAttribution=Batch credit attribution

@@ -106,7 +106,107 @@ class modCreditManager extends DolibarrModules
 		$this->rights[$r][3] = 0;
 		$this->rights[$r][4] = 'creditmanager_client';
 
-		$this->menu = 0;
+		// Menus
+		$this->menu = array();
+		$r = 0;
+
+		// Top menu - appears in the main horizontal bar
+		$this->menu[$r++] = array(
+			'fk_menu'  => '',
+			'type'     => 'top',
+			'titre'    => 'CreditManager',
+			'prefix'   => img_picto('', $this->picto, 'class="pictofixedwidth em092"'),
+			'mainmenu' => 'creditmanager',
+			'leftmenu' => '',
+			'url'      => '/custom/creditmanager/index.php',
+			'langs'    => 'creditmanager@creditmanager',
+			'position' => 100,
+			'enabled'  => 'isModEnabled("creditmanager")',
+			'perms'    => '1',
+			'target'   => '',
+			'user'     => 2,
+		);
+
+		// Left menu - Dashboard
+		$this->menu[$r++] = array(
+			'fk_menu'  => 'fk_mainmenu=creditmanager',
+			'type'     => 'left',
+			'titre'    => 'CreditManagerDashboard',
+			'prefix'   => img_picto('', $this->picto, 'class="paddingright pictofixedwidth em092"'),
+			'mainmenu' => 'creditmanager',
+			'leftmenu' => 'creditmanager_dashboard',
+			'url'      => '/custom/creditmanager/index.php',
+			'langs'    => 'creditmanager@creditmanager',
+			'position' => 1001,
+			'enabled'  => 'isModEnabled("creditmanager")',
+			'perms'    => '$user->hasRight("creditmanager","read")',
+			'target'   => '',
+			'user'     => 2,
+		);
+
+		// Left menu - Balances
+		$this->menu[$r++] = array(
+			'fk_menu'  => 'fk_mainmenu=creditmanager',
+			'type'     => 'left',
+			'titre'    => 'CreditBalances',
+			'mainmenu' => 'creditmanager',
+			'leftmenu' => 'creditmanager_balances',
+			'url'      => '/custom/creditmanager/balance_list.php',
+			'langs'    => 'creditmanager@creditmanager',
+			'position' => 1010,
+			'enabled'  => 'isModEnabled("creditmanager")',
+			'perms'    => '$user->hasRight("creditmanager","read")',
+			'target'   => '',
+			'user'     => 2,
+		);
+
+		// Left menu - Movements
+		$this->menu[$r++] = array(
+			'fk_menu'  => 'fk_mainmenu=creditmanager',
+			'type'     => 'left',
+			'titre'    => 'CreditMovements',
+			'mainmenu' => 'creditmanager',
+			'leftmenu' => 'creditmanager_movements',
+			'url'      => '/custom/creditmanager/movement_list.php',
+			'langs'    => 'creditmanager@creditmanager',
+			'position' => 1020,
+			'enabled'  => 'isModEnabled("creditmanager")',
+			'perms'    => '$user->hasRight("creditmanager","read")',
+			'target'   => '',
+			'user'     => 2,
+		);
+
+		// Left menu - Alerts
+		$this->menu[$r++] = array(
+			'fk_menu'  => 'fk_mainmenu=creditmanager',
+			'type'     => 'left',
+			'titre'    => 'CreditAlerts',
+			'mainmenu' => 'creditmanager',
+			'leftmenu' => 'creditmanager_alerts',
+			'url'      => '/custom/creditmanager/alert_list.php',
+			'langs'    => 'creditmanager@creditmanager',
+			'position' => 1030,
+			'enabled'  => 'isModEnabled("creditmanager")',
+			'perms'    => '$user->hasRight("creditmanager","read")',
+			'target'   => '',
+			'user'     => 2,
+		);
+
+		// Left menu - Admin section (separator)
+		$this->menu[$r++] = array(
+			'fk_menu'  => 'fk_mainmenu=creditmanager',
+			'type'     => 'left',
+			'titre'    => 'CreditManagerSetup',
+			'mainmenu' => 'creditmanager',
+			'leftmenu' => 'creditmanager_admin',
+			'url'      => '/custom/creditmanager/admin/credit_types.php',
+			'langs'    => 'creditmanager@creditmanager',
+			'position' => 1090,
+			'enabled'  => 'isModEnabled("creditmanager")',
+			'perms'    => '$user->hasRight("creditmanager","creditmanager_admin")',
+			'target'   => '',
+			'user'     => 0,
+		);
 	}
 
 	/**
