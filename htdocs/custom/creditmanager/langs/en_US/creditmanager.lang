@@ -3,3 +3,12 @@ Module560000Name=Credit Manager
 Module560000Desc=Manage credit hours (types, balances, timesheet debit)
 
 CreditManager=Credit Manager
+CreditManagerAttribution=Credit Manager - Attribution
+CreditManagerNewAttribution=New credit attribution
+CreditManagerBatchAttribution=Batch credit attribution
+CreditManagerClientBalances=Client credit balances
+CreditManagerImportAttributionsCSV=Import credit attributions (CSV)
+CreditManagerAttributionHistory=Attribution history
+CreditManagerAttributionAdjustment=Attribution adjustment
+CreditManagerAttributionCancel=Attribution cancellation
+CreditManagerConfirmDeleteAttribution=Do you really want to cancel this credit attribution?

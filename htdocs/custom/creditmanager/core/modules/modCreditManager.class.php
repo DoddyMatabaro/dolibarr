@@ -13,6 +13,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * Contributor of this script: https://github.com/joelmpunga Joel MPUNGA
  */
 
 /**
@@ -50,6 +51,7 @@ class modCreditManager extends DolibarrModules
 		$this->version = '1.0';
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		$this->picto = 'credit';
+		$this->editor_name = 'Joel MPUNGA and Doddy MATABARO';
 
 		$this->dirs = array();
 
