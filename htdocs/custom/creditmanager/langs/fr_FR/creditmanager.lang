@@ -3,6 +3,71 @@ Module560000Name=Credit Manager
 Module560000Desc=Gestion des crédits heures (types, soldes, débit timesheets)
 
 CreditManager=Credit Manager
+
+#
+# Menus
+#
+CreditManagerDashboard=Tableau de bord
+CreditBalances=Soldes
+CreditMovements=Mouvements
+CreditAlerts=Alertes
+CreditManagerSetup=Configuration
+CreditManagerDashboardDescription=Bienvenue dans Credit Manager. Utilisez le menu latéral pour naviguer entre les soldes, mouvements et alertes.
+CreditManagerStatsPlaceholder=Les statistiques seront affichées ici une fois les données disponibles.
+Statistics=Statistiques
+
+#
+# Onglets admin
+#
+Settings=Paramètres
+CreditTypes=Types de crédits
+CreditAttribution=Attribution crédits
+
+#
+# Gestion des types de crédits
+#
+CreditTypesManagement=Gestion des types de crédits
+CreditTypesList=Liste des types de crédits
+NewCreditType=Nouveau type de crédit
+EditCreditType=Modifier le type de crédit
+DeleteCreditType=Supprimer le type de crédit
+CreditTypeCodeHelp=Code alphanumérique unique (ex : SUPPORT_HOURS, PROJECT_HOURS)
+
+#
+# Mode de débit
+#
+DebitMode=Mode de débit
+ImmediateDebit=Immédiat
+ImmediateDebitDesc=Débité à l'approbation PM
+DelayedDebit=Différé
+DelayedDebitDesc=Débit auto après X jours
+ManualDebit=Manuel
+ManualDebitDesc=Débit manuel uniquement
+DebitDelayDays=Délai de débit
+DebitDelayDaysUnit=jours après approbation
+DaysShort=j
+
+#
+# Unités
+#
+Hours=Heures
+Days=Jours
+Credits=Crédits
+
+#
+# Statut & messages
+#
+CreditTypeCreated=Type de crédit créé avec succès
+CreditTypeUpdated=Type de crédit mis à jour avec succès
+CreditTypeDeleted=Type de crédit supprimé avec succès
+CreditTypeDeactivated=Type de crédit désactivé (utilisé dans des enregistrements existants)
+CreditTypeActivated=Type de crédit activé
+CreditTypeDisabled=Type de crédit désactivé
+ConfirmDeleteCreditType=Êtes-vous sûr de vouloir supprimer le type de crédit <strong>%s</strong> ?
+CreditTypeUsedWillBeDeactivated=Ce type de crédit est utilisé dans des mouvements ou soldes existants. Il sera désactivé au lieu d'être supprimé.
+ErrorCodeAlreadyExists=Le code '%s' existe déjà. Veuillez utiliser un code unique.
+ExportCSV=Exporter en CSV
+RecordsDeleted=%s enregistrement(s) supprimé(s)
 CreditManagerAttribution=Credit Manager - Attributions
 CreditManagerNewAttribution=Nouvelle attribution de crédits
 CreditManagerBatchAttribution=Attribution de crédits en lot
