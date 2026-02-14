@@ -68,6 +68,46 @@ CreditTypeUsedWillBeDeactivated=Ce type de crédit est utilisé dans des mouveme
 ErrorCodeAlreadyExists=Le code '%s' existe déjà. Veuillez utiliser un code unique.
 ExportCSV=Exporter en CSV
 RecordsDeleted=%s enregistrement(s) supprimé(s)
+
+#
+# Page paramètres
+#
+CreditManagerSettings=Credit Manager - Paramètres
+GeneralSettings=Paramètres généraux
+DefaultDebitMode=Mode de débit par défaut
+DefaultDebitDelay=Délai de débit par défaut
+AlertSettings=Alertes
+EnableEmailAlerts=Activer les alertes e-mail de solde bas
+LowBalanceThreshold=Seuil d'alerte de solde bas
+ClientPortalSettings=Portail client
+EnableClientPortal=Activer le portail crédits client
+EnableClientPortalDesc=Permet aux clients de consulter leur solde et historique de crédits
+SetupSaved=Paramètres enregistrés avec succès
+
+#
+# Paramètres attribution
+#
+AttributionSettings=Attribution
+MaxAttributionAmount=Montant max par attribution
+MaxAttributionAmountDesc=0 = pas de limite
+AllowNegativeAttribution=Autoriser les montants négatifs
+AllowNegativeAttributionDesc=Permet les attributions en débit (valeurs négatives)
+AllowNegativeBalance=Autoriser le solde négatif
+AllowNegativeBalanceDesc=Permet au solde client de descendre sous zéro
+NotifyOnAttribution=Notifier après attribution
+NotifyOnAttributionDesc=Envoie une notification interne à l'utilisateur lors d'une attribution
+ErrorAmountExceedsMax=Le montant dépasse le maximum autorisé (%s)
+ErrorNegativeBalanceBlocked=Opération bloquée : le solde client deviendrait négatif
+
+#
+# Paramètres import/export
+#
+ImportExportSettings=Import / Export
+CsvSeparator=Séparateur de champs CSV
+Semicolon=point-virgule
+Comma=virgule
+Tab=tabulation
+Pipe=barre verticale
 CreditManagerAttribution=Credit Manager - Attributions
 CreditManagerNewAttribution=Nouvelle attribution de crédits
 CreditManagerBatchAttribution=Attribution de crédits en lot

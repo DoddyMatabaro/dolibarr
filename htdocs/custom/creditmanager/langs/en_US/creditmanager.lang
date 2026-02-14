@@ -68,6 +68,46 @@ CreditTypeUsedWillBeDeactivated=This credit type is used in existing movements o
 ErrorCodeAlreadyExists=The code '%s' already exists. Please use a unique code.
 ExportCSV=Export CSV
 RecordsDeleted=%s record(s) deleted
+
+#
+# Setup page
+#
+CreditManagerSettings=Credit Manager - Settings
+GeneralSettings=General settings
+DefaultDebitMode=Default debit mode
+DefaultDebitDelay=Default debit delay
+AlertSettings=Alerts
+EnableEmailAlerts=Enable low balance email alerts
+LowBalanceThreshold=Low balance alert threshold
+ClientPortalSettings=Client portal
+EnableClientPortal=Enable client credit portal
+EnableClientPortalDesc=Allow clients to view their credit balance and history
+SetupSaved=Settings saved successfully
+
+#
+# Attribution settings
+#
+AttributionSettings=Attribution
+MaxAttributionAmount=Max amount per attribution
+MaxAttributionAmountDesc=0 = no limit
+AllowNegativeAttribution=Allow negative amounts
+AllowNegativeAttributionDesc=Permits debit attributions (negative values)
+AllowNegativeBalance=Allow negative balance
+AllowNegativeBalanceDesc=Permits client balance to go below zero
+NotifyOnAttribution=Notify after attribution
+NotifyOnAttributionDesc=Send internal notification to user when credits are attributed
+ErrorAmountExceedsMax=Amount exceeds the maximum allowed (%s)
+ErrorNegativeBalanceBlocked=Operation blocked: client balance would become negative
+
+#
+# Import/Export settings
+#
+ImportExportSettings=Import / Export
+CsvSeparator=CSV field separator
+Semicolon=semicolon
+Comma=comma
+Tab=tab
+Pipe=pipe
 CreditManagerAttribution=Credit Manager - Attribution
 CreditManagerNewAttribution=New credit attribution
 CreditManagerBatchAttribution=Batch credit attribution

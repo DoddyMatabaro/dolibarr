@@ -123,6 +123,9 @@ function creditmanager_update_balance($socid, $creditTypeId, $delta)
 
     if ($obj) {
         $newBalance = (float) $obj->balance + $delta;
+        if ($newBalance < 0 && !getDolGlobalInt('CREDITMANAGER_ALLOW_NEGATIVE_BALANCE', 0)) {
+            return -2;
+        }
         $sqlUpdate = 'UPDATE ' . $db->prefix() . 'credits_balance';
         $sqlUpdate .= ' SET balance = ' . price2num($newBalance, 'MT');
         $sqlUpdate .= ', tms = CURRENT_TIMESTAMP';
@@ -234,8 +237,15 @@ $error = 0;
 // Add single attribution
 if ($action === 'add' && $user->rights->creditmanager->write) {
     if (!GETPOST('cancel', 'alpha')) {
-        if ($socid <= 0 || $credit_type_id <= 0 || $amount <= 0) {
+        $allowNegative = getDolGlobalInt('CREDITMANAGER_ALLOW_NEGATIVE_ATTRIBUTION', 0);
+        $maxAmount = (float) getDolGlobalString('CREDITMANAGER_MAX_ATTRIBUTION_AMOUNT', '0');
+
+        if ($socid <= 0 || $credit_type_id <= 0 || (!$allowNegative && $amount <= 0)) {
             setEventMessages($langs->trans('ErrorBadParameters'), null, 'errors');
+            $error++;
+        }
+        if (!$error && $maxAmount > 0 && abs($amount) > $maxAmount) {
+            setEventMessages($langs->trans('ErrorAmountExceedsMax', $maxAmount), null, 'errors');
             $error++;
         }
 
@@ -414,7 +424,10 @@ if ($action === 'addbatch' && $user->rights->creditmanager->write) {
         $toselect = array();
     }
 
-    if (empty($toselect) || $credit_type_id <= 0 || $amount <= 0) {
+    $allowNegative = getDolGlobalInt('CREDITMANAGER_ALLOW_NEGATIVE_ATTRIBUTION', 0);
+    $maxAmount = (float) getDolGlobalString('CREDITMANAGER_MAX_ATTRIBUTION_AMOUNT', '0');
+
+    if (empty($toselect) || $credit_type_id <= 0 || (!$allowNegative && $amount <= 0)) {
         setEventMessages($langs->trans('ErrorBadParameters'), null, 'errors');
     } else {
         $db->begin();
@@ -463,7 +476,8 @@ if ($action === 'importcsv' && $user->rights->creditmanager->write) {
             $db->begin();
             $lineNum = 0;
 
-            while (($row = fgetcsv($handle, 0, ';')) !== false) {
+            $csvSep = getDolGlobalString('CREDITMANAGER_CSV_SEPARATOR', ';');
+            while (($row = fgetcsv($handle, 0, $csvSep)) !== false) {
                 $lineNum++;
                 // Expect: socid;credit_type_code;amount;description
                 if (count($row) < 3) {
@@ -474,7 +488,12 @@ if ($action === 'importcsv' && $user->rights->creditmanager->write) {
                 $amountCsv = price2num(trim($row[2]), 'MT');
                 $descCsv = isset($row[3]) ? trim($row[3]) : '';
 
-                if ($socidCsv <= 0 || $codeCsv === '' || $amountCsv <= 0) {
+                $allowNegativeCsv = getDolGlobalInt('CREDITMANAGER_ALLOW_NEGATIVE_ATTRIBUTION', 0);
+                $maxAmountCsv = (float) getDolGlobalString('CREDITMANAGER_MAX_ATTRIBUTION_AMOUNT', '0');
+                if ($socidCsv <= 0 || $codeCsv === '' || (!$allowNegativeCsv && $amountCsv <= 0)) {
+                    continue;
+                }
+                if ($maxAmountCsv > 0 && abs($amountCsv) > $maxAmountCsv) {
                     continue;
                 }
 
@@ -532,7 +551,8 @@ if ($action === 'exportcsv' && $user->rights->creditmanager->read) {
     }
 
     // Header
-    fputcsv($out, array('id', 'date', 'client_id', 'client_name', 'credit_type_code', 'credit_type_label', 'amount', 'user_login', 'description'), ';');
+    $csvSep = getDolGlobalString('CREDITMANAGER_CSV_SEPARATOR', ';');
+    fputcsv($out, array('id', 'date', 'client_id', 'client_name', 'credit_type_code', 'credit_type_label', 'amount', 'user_login', 'description'), $csvSep);
 
     $sql = 'SELECT m.rowid, m.date_movement, m.amount, m.description,';
     $sql .= ' s.rowid as socid, s.nom as client_name,';
@@ -579,7 +599,7 @@ if ($action === 'exportcsv' && $user->rights->creditmanager->read) {
                     $obj->login,
                     $obj->description,
                 ),
-                ';'
+                $csvSep
             );
         }
         $db->free($resql);

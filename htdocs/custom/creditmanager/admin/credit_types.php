@@ -411,7 +411,7 @@ if ($action == 'create') {
 	print '<tr>';
 	print '<td>'.$langs->trans("DebitMode").'</td>';
 	print '<td>';
-	$selectedDebitMode = 'manual';
+	$selectedDebitMode = getDolGlobalString('CREDITMANAGER_DEFAULT_DEBIT_MODE', 'manual');
 	if (GETPOSTISSET('auto_debit')) {
 		$selectedDebitMode = GETPOSTINT('auto_debit') ? 'auto' : (GETPOSTINT('debit_delay_days') > 0 ? 'delayed' : 'manual');
 	}
@@ -428,7 +428,8 @@ if ($action == 'create') {
 	print '<tr id="debit_delay_row">';
 	print '<td>'.$langs->trans("DebitDelayDays").'</td>';
 	print '<td>';
-	print '<input type="number" name="debit_delay_days" id="debit_delay_days_input" value="'.dol_escape_htmltag(GETPOST('debit_delay_days', 'int')).'" class="maxwidth100" min="1" max="365">';
+	$defaultDelay = GETPOST('debit_delay_days', 'int') ? GETPOST('debit_delay_days', 'int') : getDolGlobalString('CREDITMANAGER_DEFAULT_DEBIT_DELAY', '30');
+	print '<input type="number" name="debit_delay_days" id="debit_delay_days_input" value="'.dol_escape_htmltag($defaultDelay).'" class="maxwidth100" min="1" max="365">';
 	print ' <span class="opacitymedium">'.$langs->trans("DebitDelayDaysUnit").'</span>';
 	print '</td>';
 	print '</tr>';
