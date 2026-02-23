@@ -118,3 +118,16 @@ CreditManagerAttributionHistory=Attribution history
 CreditManagerAttributionAdjustment=Attribution adjustment
 CreditManagerAttributionCancel=Attribution cancellation
 CreditManagerConfirmDeleteAttribution=Do you really want to cancel this credit attribution?
+
+#
+# Credits tab in client card
+#
+Credits=Credits
+EvolutionLast12Months=Evolution over last 12 months
+BalanceAfter=Balance after
+Credit=Credit
+Debit=Debit
+DateRange=Date range
+MovementType=Movement type
+NoData=No data
+Total=Total

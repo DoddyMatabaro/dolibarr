@@ -117,4 +117,17 @@ CreditManagerImportAttributionsCSV=Importer des attributions de crédits (CSV)
 CreditManagerAttributionHistory=Historique des attributions
 CreditManagerAttributionAdjustment=Ajustement d'attribution
 CreditManagerAttributionCancel=Annulation d'attribution
-CreditManagerConfirmDeleteAttribution=Confirmez-vous l'annulation de cette attribution de crédits ?
+CreditManagerConfirmDeleteAttribution=Confirmez-vous l'annulation de cette attribution de crédits ?
+
+#
+# Onglet crédits fiche client
+#
+EvolutionLast12Months=Évolution sur les 12 derniers mois
+BalanceAfter=Solde après
+Credit=Crédit
+Debit=Débit
+DateRange=Période
+MovementType=Type mouvement
+NoData=Aucune donnée
+Total=Total
+CreditHistory=Historique des crédits ?
