@@ -25,6 +25,7 @@ require_once DOL_DOCUMENT_ROOT.'/core/class/commonobject.class.php';
 dol_include_once('/creditmanager/class/CreditBalance.class.php');
 dol_include_once('/creditmanager/class/CreditMovement.class.php');
 dol_include_once('/creditmanager/class/CreditType.class.php');
+require_once DOL_DOCUMENT_ROOT.'/core/lib/date.lib.php';
 
 /**
  *	Class to manage credit debit operations
@@ -62,11 +63,12 @@ class CreditDebit
 	 *	@param	int		$fk_soc			Client ID
 	 *	@param	int		$fk_credit_type	Credit type ID
 	 *	@param	float	$amount			Amount to debit
-	 *	@param	int		$fk_timesheet	Timesheet ID
+	 *	@param	int		$fk_element_time	Timesheet entry ID (llx_element_time)
 	 *	@param	string	$description	Description
+	 *	@param	string	$timesheet_elementtype	Timesheet element type
 	 *	@return	int						Movement ID if OK, <0 if KO
 	 */
-	public function debitCredits($fk_soc, $fk_credit_type, $amount, $fk_timesheet = 0, $description = '')
+	public function debitCredits($fk_soc, $fk_credit_type, $amount, $fk_element_time = 0, $description = '', $timesheet_elementtype = '')
 	{
 		global $user;
 
@@ -75,7 +77,7 @@ class CreditDebit
 			return -1;
 		}
 
-		if (!$this->validateDebit($fk_soc, $fk_credit_type, $amount, $fk_timesheet)) {
+		if (!$this->validateDebit($fk_soc, $fk_credit_type, $amount, $fk_element_time, $timesheet_elementtype)) {
 			return -2;
 		}
 
@@ -95,7 +97,9 @@ class CreditDebit
 		$movement->amount = -$amount;
 		$movement->type_movement = 'DEBIT';
 		$movement->description = $description;
-		$movement->fk_timesheet = $fk_timesheet > 0 ? $fk_timesheet : null;
+		$movement->fk_timesheet = $fk_element_time > 0 ? $fk_element_time : null; // backward compatibility
+		$movement->fk_element_time = $fk_element_time > 0 ? $fk_element_time : null;
+		$movement->timesheet_elementtype = !empty($timesheet_elementtype) ? $timesheet_elementtype : null;
 		$movement->date_movement = dol_now();
 
 		$movementId = $movement->create($user);
@@ -103,6 +107,20 @@ class CreditDebit
 			$this->error = $movement->error;
 			$this->db->rollback();
 			return -4;
+		}
+
+		if ($fk_element_time > 0) {
+			$reference = 'DEB-'.dol_print_date(dol_now(), '%Y%m%d').'-'.$movementId;
+			if (!$this->updateTimesheetCreditFields($fk_element_time, array(
+				'fk_credit_type' => (int) $fk_credit_type,
+				'credit_status' => 'DEBITED',
+				'credit_debit_reference' => $reference,
+				'credit_debit_date' => '__NOW__',
+				'credit_debit_amount' => (float) $amount,
+			))) {
+				$this->db->rollback();
+				return -5;
+			}
 		}
 
 		$this->db->commit();
@@ -112,62 +130,42 @@ class CreditDebit
 	/**
 	 *	Debit credits from timesheet
 	 *
-	 *	@param	int		$fk_timesheet	Timesheet ID
+	 *	@param	int		$fk_element_time	Timesheet entry ID (llx_element_time)
+	 *	@param	int		$fk_credit_type	Credit type ID
+	 *	@param	string	$description	Description
 	 *	@return	int						Movement ID if OK, <0 if KO
 	 */
-	public function debitCreditsFromTimesheet($fk_timesheet)
+	public function debitCreditsFromTimesheet($fk_element_time, $fk_credit_type, $description = '')
 	{
-		require_once DOL_DOCUMENT_ROOT.'/fichinter/class/fichinter.class.php';
-
-		$fichinter = new Fichinter($this->db);
-		$result = $fichinter->fetch($fk_timesheet);
-		if ($result <= 0) {
-			$this->error = 'Timesheet not found';
+		if ($fk_credit_type <= 0) {
+			$this->error = 'Credit type is required';
 			return -1;
 		}
 
-		if (empty($fichinter->fk_credit_type)) {
-			$this->error = 'Credit type not assigned';
+		$timesheet = $this->getTimesheetContext($fk_element_time);
+		if ($timesheet === false) {
+			$this->error = 'Timesheet not found';
 			return -2;
 		}
 
-		if ($fichinter->credit_status !== 'APPROVED') {
-			$this->error = 'Timesheet not approved';
+		$amount = $timesheet['duration'] / 3600;
+		if ($amount <= 0) {
+			$this->error = 'Timesheet duration is zero';
 			return -3;
 		}
 
-		if (!empty($fichinter->credit_debit_reference)) {
-			$this->error = 'Timesheet already debited';
-			return -4;
+		if (empty($description)) {
+			$description = 'Debit timesheet '.$timesheet['ref'];
 		}
-
-		$amount = $fichinter->duree / 3600;
-
-		$description = 'Débit timesheet '.$fichinter->ref;
 
 		$movementId = $this->debitCredits(
-			$fichinter->socid,
-			$fichinter->fk_credit_type,
+			$timesheet['fk_soc'],
+			$fk_credit_type,
 			$amount,
-			$fk_timesheet,
-			$description
+			$fk_element_time,
+			$description,
+			$timesheet['elementtype']
 		);
-
-		if ($movementId > 0) {
-			$reference = 'DEB-'.date('Ymd').'-'.$movementId;
-
-			$sql = "UPDATE ".$this->db->prefix()."ficheinter SET";
-			$sql .= " credit_status = 'DEBITED',";
-			$sql .= " credit_debit_reference = '".$this->db->escape($reference)."',";
-			$sql .= " credit_debit_date = NOW(),";
-			$sql .= " credit_debit_amount = ".((float) $amount);
-			$sql .= " WHERE rowid = ".((int) $fk_timesheet);
-
-			if (!$this->db->query($sql)) {
-				$this->error = $this->db->lasterror();
-				return -5;
-			}
-		}
 
 		return $movementId;
 	}
@@ -175,36 +173,22 @@ class CreditDebit
 	/**
 	 *	Refund credits from timesheet
 	 *
-	 *	@param	int		$fk_timesheet	Timesheet ID
+	 *	@param	int		$fk_element_time	Timesheet entry ID (llx_element_time)
 	 *	@return	int						Movement ID if OK, <0 if KO
 	 */
-	public function refundCredits($fk_timesheet)
+	public function refundCredits($fk_element_time)
 	{
 		global $user;
 
-		require_once DOL_DOCUMENT_ROOT.'/fichinter/class/fichinter.class.php';
-
-		$fichinter = new Fichinter($this->db);
-		$result = $fichinter->fetch($fk_timesheet);
-		if ($result <= 0) {
-			$this->error = 'Timesheet not found';
-			return -1;
-		}
-
-		if ($fichinter->credit_status !== 'DEBITED') {
-			$this->error = 'Timesheet not debited';
-			return -2;
-		}
-
 		$sql = "SELECT rowid, amount FROM ".$this->db->prefix()."credits_movements";
-		$sql .= " WHERE fk_timesheet = ".((int) $fk_timesheet);
+		$sql .= " WHERE fk_element_time = ".((int) $fk_element_time);
 		$sql .= " AND type_movement = 'DEBIT'";
 		$sql .= " ORDER BY rowid DESC LIMIT 1";
 
 		$resql = $this->db->query($sql);
 		if (!$resql) {
 			$this->error = $this->db->lasterror();
-			return -3;
+			return -1;
 		}
 
 		$obj = $this->db->fetch_object($resql);
@@ -212,34 +196,42 @@ class CreditDebit
 
 		if (!$obj) {
 			$this->error = 'Debit movement not found';
-			return -4;
+			return -2;
 		}
 
 		$parentMovementId = (int) $obj->rowid;
 		$refundAmount = abs((float) $obj->amount);
 
+		$debitMovement = new CreditMovement($this->db);
+		if ($debitMovement->fetch($parentMovementId) <= 0) {
+			$this->error = 'Debit movement unavailable';
+			return -3;
+		}
+
 		$this->db->begin();
 
 		$balance = new CreditBalance($this->db);
 		$result = $balance->updateBalance(
-			$fichinter->socid,
-			$fichinter->fk_credit_type,
+			$debitMovement->fk_soc,
+			$debitMovement->fk_credit_type,
 			$refundAmount,
 			$user
 		);
 		if ($result < 0) {
 			$this->error = $balance->error;
 			$this->db->rollback();
-			return -5;
+			return -4;
 		}
 
 		$movement = new CreditMovement($this->db);
-		$movement->fk_soc = $fichinter->socid;
-		$movement->fk_credit_type = $fichinter->fk_credit_type;
+		$movement->fk_soc = $debitMovement->fk_soc;
+		$movement->fk_credit_type = $debitMovement->fk_credit_type;
 		$movement->amount = $refundAmount;
 		$movement->type_movement = 'REFUND';
-		$movement->description = 'Remboursement timesheet '.$fichinter->ref;
-		$movement->fk_timesheet = $fk_timesheet;
+		$movement->description = 'Refund timesheet movement #'.$parentMovementId;
+		$movement->fk_timesheet = $fk_element_time; // backward compatibility
+		$movement->fk_element_time = $fk_element_time;
+		$movement->timesheet_elementtype = $debitMovement->timesheet_elementtype;
 		$movement->fk_parent_movement = $parentMovementId;
 		$movement->date_movement = dol_now();
 
@@ -247,24 +239,89 @@ class CreditDebit
 		if ($movementId < 0) {
 			$this->error = $movement->error;
 			$this->db->rollback();
-			return -6;
+			return -5;
 		}
 
-		$sql = "UPDATE ".$this->db->prefix()."ficheinter SET";
-		$sql .= " credit_status = 'APPROVED',";
-		$sql .= " credit_debit_reference = NULL,";
-		$sql .= " credit_debit_date = NULL,";
-		$sql .= " credit_debit_amount = NULL";
-		$sql .= " WHERE rowid = ".((int) $fk_timesheet);
-
-		if (!$this->db->query($sql)) {
-			$this->error = $this->db->lasterror();
+		if (!$this->updateTimesheetCreditFields($fk_element_time, array(
+			'fk_credit_type' => $debitMovement->fk_credit_type ? (int) $debitMovement->fk_credit_type : null,
+			'credit_status' => 'APPROVED',
+			'credit_debit_reference' => null,
+			'credit_debit_date' => null,
+			'credit_debit_amount' => null,
+		))) {
 			$this->db->rollback();
-			return -7;
+			return -6;
 		}
 
 		$this->db->commit();
 		return $movementId;
+	}
+
+	public function saveTimesheetCreditType($fk_element_time, $fk_credit_type)
+	{
+		$fields = array(
+			'fk_credit_type' => $fk_credit_type > 0 ? (int) $fk_credit_type : null,
+			'credit_status' => $fk_credit_type > 0 ? 'SUBMITTED' : null,
+			'credit_debit_reference' => null,
+			'credit_debit_date' => null,
+			'credit_debit_amount' => null,
+			'credit_approval_date' => null,
+		);
+
+		return $this->updateTimesheetCreditFields($fk_element_time, $fields);
+	}
+
+	public function hasActiveDebit($fk_element_time)
+	{
+		$sql  = "SELECT rowid FROM ".$this->db->prefix()."credits_movements";
+		$sql .= " WHERE fk_element_time = ".((int) $fk_element_time);
+		$sql .= " AND type_movement = 'DEBIT'";
+		$sql .= " AND rowid NOT IN (";
+		$sql .= "   SELECT fk_parent_movement FROM ".$this->db->prefix()."credits_movements";
+		$sql .= "   WHERE fk_parent_movement IS NOT NULL AND type_movement = 'REFUND'";
+		$sql .= " )";
+		$sql .= " ORDER BY rowid DESC LIMIT 1";
+
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			$this->error = $this->db->lasterror();
+			return -1;
+		}
+
+		$obj = $this->db->fetch_object($resql);
+		$this->db->free($resql);
+
+		return $obj ? 1 : 0;
+	}
+
+	private function updateTimesheetCreditFields($fk_element_time, $fields)
+	{
+		if ($fk_element_time <= 0) {
+			return true;
+		}
+
+		$sql = "UPDATE ".$this->db->prefix()."element_time SET ";
+		$parts = array();
+		foreach ($fields as $column => $value) {
+			if ($value === '__NOW__') {
+				$parts[] = $column." = NOW()";
+			} elseif ($value === null) {
+				$parts[] = $column." = NULL";
+			} elseif (is_numeric($value) && $column !== 'credit_status' && $column !== 'credit_debit_reference') {
+				$parts[] = $column." = ".((float) $value);
+			} else {
+				$parts[] = $column." = '".$this->db->escape((string) $value)."'";
+			}
+		}
+		$sql .= implode(', ', $parts);
+		$sql .= " WHERE rowid = ".((int) $fk_element_time);
+
+		if (!$this->db->query($sql)) {
+			$this->error = $this->db->lasterror();
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -273,13 +330,13 @@ class CreditDebit
 	 *	@param	int		$fk_soc			Client ID
 	 *	@param	int		$fk_credit_type	Credit type ID
 	 *	@param	float	$amount			Amount to debit
-	 *	@param	int		$fk_timesheet	Timesheet ID
+	 *	@param	int		$fk_element_time	Timesheet entry ID (llx_element_time)
+	 *	@param	string	$timesheet_elementtype	Timesheet element type
 	 *	@return	bool					true if valid, false otherwise
 	 */
-	private function validateDebit($fk_soc, $fk_credit_type, $amount, $fk_timesheet = 0)
+	private function validateDebit($fk_soc, $fk_credit_type, $amount, $fk_element_time = 0, $timesheet_elementtype = '')
 	{
 		require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
-		require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
 
 		$societe = new Societe($this->db);
 		if ($societe->fetch($fk_soc) <= 0) {
@@ -309,36 +366,78 @@ class CreditDebit
 			return false;
 		}
 
-		if ($fk_timesheet > 0) {
-			require_once DOL_DOCUMENT_ROOT.'/fichinter/class/fichinter.class.php';
-
-			$fichinter = new Fichinter($this->db);
-			if ($fichinter->fetch($fk_timesheet) <= 0) {
+		if ($fk_element_time > 0) {
+			$timesheet = $this->getTimesheetContext($fk_element_time);
+			if ($timesheet === false) {
 				$this->error = 'Timesheet not found';
 				return false;
 			}
 
-			if ($fichinter->credit_status !== 'APPROVED') {
-				$this->error = 'Timesheet not approved';
+			if (!empty($timesheet_elementtype) && $timesheet['elementtype'] !== $timesheet_elementtype) {
+				$this->error = 'Timesheet element type mismatch';
 				return false;
-			}
-
-			if (empty($fichinter->fk_credit_type)) {
-				$this->error = 'Credit type not assigned to timesheet';
-				return false;
-			}
-
-			if ($fichinter->fk_projet > 0) {
-				$project = new Project($this->db);
-				if ($project->fetch($fichinter->fk_projet) > 0) {
-					if ($project->statut == Project::STATUS_CLOSED) {
-						$this->error = 'Project closed';
-						return false;
-					}
-				}
 			}
 		}
 
 		return true;
+	}
+
+	/**
+	 *	Load and normalize a timesheet context from llx_element_time.
+	 *
+	 *	@param	int		$fk_element_time	Timesheet entry ID
+	 *	@return	array|false					Context array or false on error
+	 */
+	private function getTimesheetContext($fk_element_time)
+	{
+		require_once DOL_DOCUMENT_ROOT.'/core/class/timespent.class.php';
+		require_once DOL_DOCUMENT_ROOT.'/fichinter/class/fichinter.class.php';
+		require_once DOL_DOCUMENT_ROOT.'/projet/class/task.class.php';
+		require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
+
+		$timespent = new TimeSpent($this->db);
+		if ($timespent->fetch($fk_element_time) <= 0) {
+			return false;
+		}
+
+		$elementtype = (string) $timespent->elementtype;
+		$fk_soc = 0;
+		$ref = 'TS-'.$fk_element_time;
+
+		if ($elementtype === 'fichinter') {
+			$fichinter = new Fichinter($this->db);
+			if ($fichinter->fetch((int) $timespent->fk_element) <= 0) {
+				return false;
+			}
+			$fk_soc = (int) $fichinter->socid;
+			$ref = $fichinter->ref;
+		} elseif ($elementtype === 'task') {
+			$task = new Task($this->db);
+			if ($task->fetch((int) $timespent->fk_element) <= 0) {
+				return false;
+			}
+			if (!empty($task->socid)) {
+				$fk_soc = (int) $task->socid;
+			} elseif (!empty($task->fk_project)) {
+				$project = new Project($this->db);
+				if ($project->fetch((int) $task->fk_project) > 0) {
+					$fk_soc = (int) $project->socid;
+				}
+			}
+			$ref = !empty($task->ref) ? $task->ref : ('TASK-'.$task->id);
+		} else {
+			return false;
+		}
+
+		if ($fk_soc <= 0) {
+			return false;
+		}
+
+		return array(
+			'fk_soc' => $fk_soc,
+			'duration' => (float) $timespent->element_duration,
+			'elementtype' => $elementtype,
+			'ref' => $ref,
+		);
 	}
 }
