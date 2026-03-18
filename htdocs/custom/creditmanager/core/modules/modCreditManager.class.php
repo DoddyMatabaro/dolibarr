@@ -16,26 +16,10 @@
  * Contributor of this script: https://github.com/joelmpunga Joel MPUNGA
  */
 
-/**
- *	\defgroup   creditmanager    Module Credit Manager
- *	\brief      Module to manage credit hours (types, balances, timesheet debit)
- *	\file       htdocs/custom/creditmanager/core/modules/modCreditManager.class.php
- *	\ingroup    creditmanager
- *	\brief      Description and activation file for the module Credit Manager
- */
-
 include_once DOL_DOCUMENT_ROOT.'/core/modules/DolibarrModules.class.php';
 
-/**
- *	Class to describe and enable module Credit Manager
- */
 class modCreditManager extends DolibarrModules
 {
-	/**
-	 *   Constructor. Define names, constants, directories, boxes, permissions
-	 *
-	 *   @param      DoliDB		$db      Database handler
-	 */
 	public function __construct($db)
 	{
 		global $langs;
@@ -57,6 +41,10 @@ class modCreditManager extends DolibarrModules
 
 		$this->module_parts = array(
 			'triggers' => 1,
+			'hooks' => array(
+				'data' => array('tasktimelist'),
+				'entity' => '0',
+			),
 		);
 
 		$this->depends = array('modSociete', 'modProjet', 'modFicheinter', 'modContrat', 'modFacture');
@@ -218,12 +206,6 @@ class modCreditManager extends DolibarrModules
 		);
 	}
 
-	/**
-	 *  Function called when module is enabled.
-	 *
-	 *  @param      string	$options    Options when enabling module ('', 'noboxes')
-	 *  @return     int             	1 if OK, 0 if KO
-	 */
 	public function init($options = '')
 	{
 		$result = $this->_load_tables('/custom/creditmanager/sql/', '');
@@ -231,30 +213,26 @@ class modCreditManager extends DolibarrModules
 			return -1;
 		}
 
-		// Extend llx_fichinter with credit columns to avoid missin errors
-		$this->addFichinterCreditColumns();
+		// Keep backward compatibility for UI/legacy queries expecting these fields on llx_element_time.
+		$this->addElementTimeCreditColumns();
 
 		return $this->_init(array(), $options);
 	}
 
-	/**
-	 * Add credit-related columns to llx_fichinter if not present
-	 *
-	 * @return void
-	 */
-	private function addFichinterCreditColumns()
+	private function addElementTimeCreditColumns()
 	{
-		$table = MAIN_DB_PREFIX . 'fichinter';
+		$table = MAIN_DB_PREFIX.'element_time';
 		$cols = array(
-			'fk_credit_type' => "ALTER TABLE " . $table . " ADD COLUMN fk_credit_type INTEGER NULL",
-			'credit_status' => "ALTER TABLE " . $table . " ADD COLUMN credit_status VARCHAR(20) DEFAULT 'SUBMITTED'",
-			'credit_debit_reference' => "ALTER TABLE " . $table . " ADD COLUMN credit_debit_reference VARCHAR(50) NULL",
-			'credit_debit_date' => "ALTER TABLE " . $table . " ADD COLUMN credit_debit_date DATETIME NULL",
-			'credit_debit_amount' => "ALTER TABLE " . $table . " ADD COLUMN credit_debit_amount DECIMAL(15,2) NULL",
-			'credit_approval_date' => "ALTER TABLE " . $table . " ADD COLUMN credit_approval_date DATETIME NULL",
+			'fk_credit_type' => "ALTER TABLE ".$table." ADD COLUMN fk_credit_type INTEGER NULL",
+			'credit_status' => "ALTER TABLE ".$table." ADD COLUMN credit_status VARCHAR(20) DEFAULT 'SUBMITTED'",
+			'credit_debit_reference' => "ALTER TABLE ".$table." ADD COLUMN credit_debit_reference VARCHAR(50) NULL",
+			'credit_debit_date' => "ALTER TABLE ".$table." ADD COLUMN credit_debit_date DATETIME NULL",
+			'credit_debit_amount' => "ALTER TABLE ".$table." ADD COLUMN credit_debit_amount DECIMAL(15,2) NULL",
+			'credit_approval_date' => "ALTER TABLE ".$table." ADD COLUMN credit_approval_date DATETIME NULL",
 		);
+
 		foreach ($cols as $col => $sql) {
-			$res = $this->db->query("SHOW COLUMNS FROM " . $table . " LIKE '" . $this->db->escape($col) . "'");
+			$res = $this->db->query("SHOW COLUMNS FROM ".$table." LIKE '".$this->db->escape($col)."'");
 			if ($res && $this->db->num_rows($res) == 0) {
 				$this->db->query($sql);
 			}
@@ -263,4 +241,5 @@ class modCreditManager extends DolibarrModules
 			}
 		}
 	}
+
 }

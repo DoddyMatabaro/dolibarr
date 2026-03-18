@@ -89,6 +89,16 @@ class CreditMovement extends CommonObject
 	public $fk_timesheet;
 
 	/**
+	 * @var int|null Timesheet entry ID from llx_element_time
+	 */
+	public $fk_element_time;
+
+	/**
+	 * @var string|null Element type from llx_element_time (task, fichinter...)
+	 */
+	public $timesheet_elementtype;
+
+	/**
 	 * @var int|null Invoice ID
 	 */
 	public $fk_invoice;
@@ -129,7 +139,7 @@ class CreditMovement extends CommonObject
 	public function fetch($id)
 	{
 		$sql = "SELECT rowid, entity, fk_soc, fk_credit_type, date_movement, amount, balance_after,";
-		$sql .= " type_movement, description, fk_timesheet, fk_invoice, fk_attribution,";
+		$sql .= " type_movement, description, fk_timesheet, fk_element_time, timesheet_elementtype, fk_invoice, fk_attribution,";
 		$sql .= " fk_parent_movement, fk_user_creat, tms";
 		$sql .= " FROM ".$this->db->prefix().$this->table_element;
 		$sql .= " WHERE rowid = ".((int) $id);
@@ -149,6 +159,8 @@ class CreditMovement extends CommonObject
 				$this->type_movement = $obj->type_movement;
 				$this->description = $obj->description;
 				$this->fk_timesheet = $obj->fk_timesheet ? (int) $obj->fk_timesheet : null;
+				$this->fk_element_time = $obj->fk_element_time ? (int) $obj->fk_element_time : null;
+				$this->timesheet_elementtype = $obj->timesheet_elementtype;
 				$this->fk_invoice = $obj->fk_invoice ? (int) $obj->fk_invoice : null;
 				$this->fk_attribution = $obj->fk_attribution ? (int) $obj->fk_attribution : null;
 				$this->fk_parent_movement = $obj->fk_parent_movement ? (int) $obj->fk_parent_movement : null;
@@ -195,7 +207,7 @@ class CreditMovement extends CommonObject
 
 		$sql = "INSERT INTO ".$this->db->prefix().$this->table_element;
 		$sql .= " (entity, fk_soc, fk_credit_type, date_movement, amount, balance_after,";
-		$sql .= " type_movement, description, fk_timesheet, fk_invoice, fk_attribution,";
+		$sql .= " type_movement, description, fk_timesheet, fk_element_time, timesheet_elementtype, fk_invoice, fk_attribution,";
 		$sql .= " fk_parent_movement, fk_user_creat, tms)";
 		$sql .= " VALUES (";
 		$sql .= ((int) $conf->entity).", ";
@@ -207,6 +219,8 @@ class CreditMovement extends CommonObject
 		$sql .= "'".$this->db->escape($this->type_movement)."', ";
 		$sql .= ($this->description ? "'".$this->db->escape($this->description)."'" : "NULL").", ";
 		$sql .= ($this->fk_timesheet ? ((int) $this->fk_timesheet) : "NULL").", ";
+		$sql .= ($this->fk_element_time ? ((int) $this->fk_element_time) : "NULL").", ";
+		$sql .= ($this->timesheet_elementtype ? "'".$this->db->escape($this->timesheet_elementtype)."'" : "NULL").", ";
 		$sql .= ($this->fk_invoice ? ((int) $this->fk_invoice) : "NULL").", ";
 		$sql .= ($this->fk_attribution ? ((int) $this->fk_attribution) : "NULL").", ";
 		$sql .= ($this->fk_parent_movement ? ((int) $this->fk_parent_movement) : "NULL").", ";
@@ -261,6 +275,12 @@ class CreditMovement extends CommonObject
 		}
 		if (!empty($filters['fk_timesheet'])) {
 			$sql .= " AND fk_timesheet = ".((int) $filters['fk_timesheet']);
+		}
+		if (!empty($filters['fk_element_time'])) {
+			$sql .= " AND fk_element_time = ".((int) $filters['fk_element_time']);
+		}
+		if (!empty($filters['timesheet_elementtype'])) {
+			$sql .= " AND timesheet_elementtype = '".$this->db->escape($filters['timesheet_elementtype'])."'";
 		}
 		if (!empty($filters['date_start'])) {
 			$sql .= " AND date_movement >= '".$this->db->idate($filters['date_start'])."'";
