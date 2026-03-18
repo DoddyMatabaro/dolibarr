@@ -152,6 +152,37 @@ class FichinterTest extends CommonClassTest
 	}
 
 	/**
+	 * Verify that the formObjectOptions hook outputs a credit type label when the
+	 * fk_credit_type column is populated on a ficheinter record.
+	 *
+	 * @param Fichinter $localobject
+	 * @depends testFichinterValid
+	 */
+	public function testFichinterHookDisplaysCreditType($localobject)
+	{
+		global $db, $user;
+
+		// create temporary credit type
+		require_once DOL_DOCUMENT_ROOT.'/custom/creditmanager/class/CreditType.class.php';
+		$ct = new CreditType($db);
+		$ct->code = 'UTYPE';
+		$ct->label = 'Unit test';
+		$ct->create($user);
+
+		// assign to intervention
+		$sql = "UPDATE " . MAIN_DB_PREFIX . "fichinter SET fk_credit_type = " . ((int) $ct->id) . " WHERE rowid = " . ((int) $localobject->id);
+		$db->query($sql);
+
+		// call hook directly
+		require_once DOL_DOCUMENT_ROOT.'/custom/creditmanager/class/actions_creditmanager.class.php';
+		$hook = new ActionsCreditmanager($db);
+		$hook->formObjectOptions(array(), $localobject, '');
+
+		$this->assertStringContainsString('Unit test', $hook->resprints);
+		return $localobject;
+	}
+
+	/**
 	 * testFichinterValid
 	 *
 	 * @param	Fichinter	$localobject	Object intervention
