@@ -57,11 +57,8 @@ class modCreditManager extends DolibarrModules
 
 		$this->module_parts = array(
 			'triggers' => 1,
-			// Hooks contexts handled by this module. we will add interventioncard for timesheet UI integration
-			'hooks' => array(
-				'data' => array('interventioncard'),
-			),
 		);
+
 		$this->depends = array('modSociete', 'modProjet', 'modFicheinter', 'modContrat', 'modFacture');
 		$this->requiredby = array();
 		$this->conflictwith = array();
