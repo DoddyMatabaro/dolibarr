@@ -231,6 +231,36 @@ class modCreditManager extends DolibarrModules
 			return -1;
 		}
 
+		// Extend llx_fichinter with credit columns to avoid missin errors
+		$this->addFichinterCreditColumns();
+
 		return $this->_init(array(), $options);
+	}
+
+	/**
+	 * Add credit-related columns to llx_fichinter if not present
+	 *
+	 * @return void
+	 */
+	private function addFichinterCreditColumns()
+	{
+		$table = MAIN_DB_PREFIX . 'fichinter';
+		$cols = array(
+			'fk_credit_type' => "ALTER TABLE " . $table . " ADD COLUMN fk_credit_type INTEGER NULL",
+			'credit_status' => "ALTER TABLE " . $table . " ADD COLUMN credit_status VARCHAR(20) DEFAULT 'SUBMITTED'",
+			'credit_debit_reference' => "ALTER TABLE " . $table . " ADD COLUMN credit_debit_reference VARCHAR(50) NULL",
+			'credit_debit_date' => "ALTER TABLE " . $table . " ADD COLUMN credit_debit_date DATETIME NULL",
+			'credit_debit_amount' => "ALTER TABLE " . $table . " ADD COLUMN credit_debit_amount DECIMAL(15,2) NULL",
+			'credit_approval_date' => "ALTER TABLE " . $table . " ADD COLUMN credit_approval_date DATETIME NULL",
+		);
+		foreach ($cols as $col => $sql) {
+			$res = $this->db->query("SHOW COLUMNS FROM " . $table . " LIKE '" . $this->db->escape($col) . "'");
+			if ($res && $this->db->num_rows($res) == 0) {
+				$this->db->query($sql);
+			}
+			if ($res) {
+				$this->db->free($res);
+			}
+		}
 	}
 }
