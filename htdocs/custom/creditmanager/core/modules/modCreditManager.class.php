@@ -213,6 +213,9 @@ class modCreditManager extends DolibarrModules
 			return -1;
 		}
 
+		// Backward compatibility for existing installs that predate timesheet linkage columns.
+		$this->addCreditsMovementsColumns();
+
 		// Keep backward compatibility for UI/legacy queries expecting these fields on llx_element_time.
 		$this->addElementTimeCreditColumns();
 
@@ -229,6 +232,25 @@ class modCreditManager extends DolibarrModules
 			'credit_debit_date' => "ALTER TABLE ".$table." ADD COLUMN credit_debit_date DATETIME NULL",
 			'credit_debit_amount' => "ALTER TABLE ".$table." ADD COLUMN credit_debit_amount DECIMAL(15,2) NULL",
 			'credit_approval_date' => "ALTER TABLE ".$table." ADD COLUMN credit_approval_date DATETIME NULL",
+		);
+
+		foreach ($cols as $col => $sql) {
+			$res = $this->db->query("SHOW COLUMNS FROM ".$table." LIKE '".$this->db->escape($col)."'");
+			if ($res && $this->db->num_rows($res) == 0) {
+				$this->db->query($sql);
+			}
+			if ($res) {
+				$this->db->free($res);
+			}
+		}
+	}
+
+	private function addCreditsMovementsColumns()
+	{
+		$table = MAIN_DB_PREFIX.'credits_movements';
+		$cols = array(
+			'fk_element_time' => "ALTER TABLE ".$table." ADD COLUMN fk_element_time INTEGER NULL",
+			'timesheet_elementtype' => "ALTER TABLE ".$table." ADD COLUMN timesheet_elementtype VARCHAR(32) NULL",
 		);
 
 		foreach ($cols as $col => $sql) {

@@ -36,6 +36,7 @@ class ActionsCreditmanager extends CommonHookActions
 	public function printFieldListTitle($parameters, &$object, &$action)
 	{
 		global $langs;
+		$langs->load('creditmanager@creditmanager');
 
 		if (!$this->isTaskTimeListContext($parameters)) {
 			return 0;
@@ -58,6 +59,7 @@ class ActionsCreditmanager extends CommonHookActions
 	public function printFieldListValue($parameters, &$object, &$action)
 	{
 		global $langs;
+		$langs->load('creditmanager@creditmanager');
 
 		if (!$this->isTaskTimeListContext($parameters)) {
 			return 0;
@@ -116,6 +118,7 @@ class ActionsCreditmanager extends CommonHookActions
 	private function renderCreditTypeSelect($selectedId, $htmlName)
 	{
 		global $langs;
+		$langs->load('creditmanager@creditmanager');
 
 		$creditType = new CreditType($this->db);
 		$list = $creditType->fetchAll(1);

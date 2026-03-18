@@ -29,6 +29,12 @@ require_once DOL_DOCUMENT_ROOT.'/core/class/commonobject.class.php';
 class CreditMovement extends CommonObject
 {
 	/**
+	 * Cache existing columns on llx_credits_movements for backward compatibility
+	 * @var array<string,bool>
+	 */
+	private static $columnExistsCache = array();
+
+	/**
 	 * @var DoliDB Database handler
 	 */
 	public $db;
@@ -138,8 +144,14 @@ class CreditMovement extends CommonObject
 	 */
 	public function fetch($id)
 	{
+		$hasFkElementTime = $this->hasTableColumn('fk_element_time');
+		$hasTimesheetElementType = $this->hasTableColumn('timesheet_elementtype');
+
 		$sql = "SELECT rowid, entity, fk_soc, fk_credit_type, date_movement, amount, balance_after,";
-		$sql .= " type_movement, description, fk_timesheet, fk_element_time, timesheet_elementtype, fk_invoice, fk_attribution,";
+		$sql .= " type_movement, description, fk_timesheet,";
+		$sql .= ($hasFkElementTime ? " fk_element_time," : " NULL as fk_element_time,");
+		$sql .= ($hasTimesheetElementType ? " timesheet_elementtype," : " NULL as timesheet_elementtype,");
+		$sql .= " fk_invoice, fk_attribution,";
 		$sql .= " fk_parent_movement, fk_user_creat, tms";
 		$sql .= " FROM ".$this->db->prefix().$this->table_element;
 		$sql .= " WHERE rowid = ".((int) $id);
@@ -185,6 +197,8 @@ class CreditMovement extends CommonObject
 	public function create($user)
 	{
 		global $conf;
+		$hasFkElementTime = $this->hasTableColumn('fk_element_time');
+		$hasTimesheetElementType = $this->hasTableColumn('timesheet_elementtype');
 
 		if (empty($this->fk_soc) || empty($this->fk_credit_type) || empty($this->type_movement)) {
 			$this->error = 'fk_soc, fk_credit_type and type_movement are required';
@@ -207,7 +221,14 @@ class CreditMovement extends CommonObject
 
 		$sql = "INSERT INTO ".$this->db->prefix().$this->table_element;
 		$sql .= " (entity, fk_soc, fk_credit_type, date_movement, amount, balance_after,";
-		$sql .= " type_movement, description, fk_timesheet, fk_element_time, timesheet_elementtype, fk_invoice, fk_attribution,";
+		$sql .= " type_movement, description, fk_timesheet,";
+		if ($hasFkElementTime) {
+			$sql .= " fk_element_time,";
+		}
+		if ($hasTimesheetElementType) {
+			$sql .= " timesheet_elementtype,";
+		}
+		$sql .= " fk_invoice, fk_attribution,";
 		$sql .= " fk_parent_movement, fk_user_creat, tms)";
 		$sql .= " VALUES (";
 		$sql .= ((int) $conf->entity).", ";
@@ -219,8 +240,12 @@ class CreditMovement extends CommonObject
 		$sql .= "'".$this->db->escape($this->type_movement)."', ";
 		$sql .= ($this->description ? "'".$this->db->escape($this->description)."'" : "NULL").", ";
 		$sql .= ($this->fk_timesheet ? ((int) $this->fk_timesheet) : "NULL").", ";
-		$sql .= ($this->fk_element_time ? ((int) $this->fk_element_time) : "NULL").", ";
-		$sql .= ($this->timesheet_elementtype ? "'".$this->db->escape($this->timesheet_elementtype)."'" : "NULL").", ";
+		if ($hasFkElementTime) {
+			$sql .= ($this->fk_element_time ? ((int) $this->fk_element_time) : "NULL").", ";
+		}
+		if ($hasTimesheetElementType) {
+			$sql .= ($this->timesheet_elementtype ? "'".$this->db->escape($this->timesheet_elementtype)."'" : "NULL").", ";
+		}
 		$sql .= ($this->fk_invoice ? ((int) $this->fk_invoice) : "NULL").", ";
 		$sql .= ($this->fk_attribution ? ((int) $this->fk_attribution) : "NULL").", ";
 		$sql .= ($this->fk_parent_movement ? ((int) $this->fk_parent_movement) : "NULL").", ";
@@ -261,6 +286,9 @@ class CreditMovement extends CommonObject
 	 */
 	public function fetchAll($filters = array(), $sortfield = 'date_movement', $sortorder = 'DESC', $limit = 0, $offset = 0)
 	{
+		$hasFkElementTime = $this->hasTableColumn('fk_element_time');
+		$hasTimesheetElementType = $this->hasTableColumn('timesheet_elementtype');
+
 		$sql = "SELECT rowid FROM ".$this->db->prefix().$this->table_element;
 		$sql .= " WHERE entity IN (".getEntity('credits_movement').")";
 
@@ -276,10 +304,10 @@ class CreditMovement extends CommonObject
 		if (!empty($filters['fk_timesheet'])) {
 			$sql .= " AND fk_timesheet = ".((int) $filters['fk_timesheet']);
 		}
-		if (!empty($filters['fk_element_time'])) {
+		if ($hasFkElementTime && !empty($filters['fk_element_time'])) {
 			$sql .= " AND fk_element_time = ".((int) $filters['fk_element_time']);
 		}
-		if (!empty($filters['timesheet_elementtype'])) {
+		if ($hasTimesheetElementType && !empty($filters['timesheet_elementtype'])) {
 			$sql .= " AND timesheet_elementtype = '".$this->db->escape($filters['timesheet_elementtype'])."'";
 		}
 		if (!empty($filters['date_start'])) {
@@ -309,6 +337,31 @@ class CreditMovement extends CommonObject
 		}
 		$this->db->free($resql);
 		return $list;
+	}
+
+	/**
+	 * Check if a column exists on llx_credits_movements
+	 *
+	 * @param string $columnName
+	 * @return bool
+	 */
+	private function hasTableColumn($columnName)
+	{
+		$key = $this->db->prefix().$this->table_element.'.'.$columnName;
+		if (array_key_exists($key, self::$columnExistsCache)) {
+			return self::$columnExistsCache[$key];
+		}
+
+		$sql = "SHOW COLUMNS FROM ".$this->db->prefix().$this->table_element." LIKE '".$this->db->escape($columnName)."'";
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			self::$columnExistsCache[$key] = false;
+			return false;
+		}
+
+		self::$columnExistsCache[$key] = ($this->db->num_rows($resql) > 0);
+		$this->db->free($resql);
+		return self::$columnExistsCache[$key];
 	}
 
 	/**
