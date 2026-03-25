@@ -227,7 +227,7 @@ class modCreditManager extends DolibarrModules
 		$table = MAIN_DB_PREFIX.'element_time';
 		$cols = array(
 			'fk_credit_type' => "ALTER TABLE ".$table." ADD COLUMN fk_credit_type INTEGER NULL",
-			'credit_status' => "ALTER TABLE ".$table." ADD COLUMN credit_status VARCHAR(20) DEFAULT 'SUBMITTED'",
+			'credit_status' => "ALTER TABLE ".$table." ADD COLUMN credit_status VARCHAR(20) DEFAULT 'DRAFT'",
 			'credit_debit_reference' => "ALTER TABLE ".$table." ADD COLUMN credit_debit_reference VARCHAR(50) NULL",
 			'credit_debit_date' => "ALTER TABLE ".$table." ADD COLUMN credit_debit_date DATETIME NULL",
 			'credit_debit_amount' => "ALTER TABLE ".$table." ADD COLUMN credit_debit_amount DECIMAL(15,2) NULL",
