@@ -261,7 +261,6 @@ class CreditDebit
 	{
 		$fields = array(
 			'fk_credit_type' => $fk_credit_type > 0 ? (int) $fk_credit_type : null,
-			'credit_status' => $fk_credit_type > 0 ? 'SUBMITTED' : null,
 			'credit_debit_reference' => null,
 			'credit_debit_date' => null,
 			'credit_debit_amount' => null,

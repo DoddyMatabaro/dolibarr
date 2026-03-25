@@ -33,7 +33,7 @@ class ActionsCreditmanager extends CommonHookActions
 		return 0;
 	}
 
-	public function printFieldListTitle($parameters, &$object, &$action)
+	/*public function printFieldListTitle($parameters, &$object, &$action)
 	{
 		global $langs;
 		$langs->load('creditmanager@creditmanager');
@@ -44,7 +44,7 @@ class ActionsCreditmanager extends CommonHookActions
 
 		$this->resprints = '<td class="liste_titre">'.$langs->trans('CreditType').'</td>';
 		return 0;
-	}
+	}*/
 
 	public function printFieldListOption($parameters, &$object, &$action)
 	{
@@ -56,7 +56,7 @@ class ActionsCreditmanager extends CommonHookActions
 		return 0;
 	}
 
-	public function printFieldListValue($parameters, &$object, &$action)
+	/*public function printFieldListValue($parameters, &$object, &$action)
 	{
 		global $langs;
 		$langs->load('creditmanager@creditmanager');
@@ -103,7 +103,7 @@ class ActionsCreditmanager extends CommonHookActions
 		$status = !empty($timespent->credit_status) ? ' <span class="opacitymedium">('.dol_escape_htmltag($timespent->credit_status).')</span>' : '';
 		$this->resprints = '<td class="nowraponall">'.$label.$status.'</td>';
 		return 0;
-	}
+	}*/
 
 	private function isTaskTimeListContext($parameters)
 	{

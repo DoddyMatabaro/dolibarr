@@ -229,6 +229,14 @@ class Task extends CommonObjectLine
 	/**
 	 * @var int
 	 */
+	public $timespent_fk_credit_type;
+	/**
+	 * @var string
+	 */
+	public $timespent_credit_status;
+	/**
+	 * @var int
+	 */
 	public $timespent_fk_product;
 	/**
 	 * @var int
@@ -1663,6 +1671,8 @@ class Task extends CommonObjectLine
 		$timespent->fk_product = $this->timespent_fk_product;
 		$timespent->note = $this->timespent_note;
 		$timespent->datec = $now;
+		$timespent->fk_credit_type = ($this->timespent_fk_credit_type);
+		$timespent->credit_status = ($this->timespent_credit_status);
 
 		$result = $timespent->create($user);
 		if ($result > 0) {
@@ -2085,6 +2095,12 @@ class Task extends CommonObjectLine
 		if (isset($this->timespent_note)) {
 			$this->timespent_note = trim($this->timespent_note);
 		}
+		if (isset($this->timespent_credit_status)) {
+			$this->timespent_credit_status = $this->timespent_credit_status;
+		}
+		if (isset($this->timespent_fk_credit_type)) {
+			$this->timespent_fk_credit_type = $this->timespent_fk_credit_type;
+		}
 
 		if (getDolGlobalString('PROJECT_TIMESHEET_PREVENT_AFTER_MONTHS')) {
 			require_once DOL_DOCUMENT_ROOT.'/core/lib/date.lib.php';
@@ -2113,8 +2129,11 @@ class Task extends CommonObjectLine
 		$timespent->fk_product = $this->timespent_fk_product;
 		$timespent->fk_element = $this->id; // Update task assignment (may be changed)
 		$timespent->note = $this->timespent_note;
+		$timespent->credit_status = $this->timespent_credit_status;
+		$timespent->fk_credit_type = $this->timespent_fk_credit_type;
 		$timespent->invoice_id = $this->timespent_invoiceid;
 		$timespent->invoice_line_id = $this->timespent_invoicelineid;
+		echo var_dump($this->timespent_credit_status);
 
 		dol_syslog(get_class($this)."::updateTimeSpent", LOG_DEBUG);
 		if ($timespent->update($user) > 0) {
