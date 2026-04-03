@@ -22,6 +22,43 @@
  */
 
 /**
+ * Force all Credit Manager left menu entries to the same level as Dashboard (Menubase::menuLeftCharger adds them with level 0 when fk_menu=-1 and fk_leftmenu is empty).
+ * If fk_menu points to another left entry, Eldy shows those lines as level > 0 and omits pictos.
+ *
+ * @param DoliDB $db             Database handler
+ * @param bool   $useSessionCache  If true, run at most once per session (for web pages)
+ * @return void
+ */
+function creditmanagerEnsureLeftMenuFlat(DoliDB $db, $useSessionCache = true)
+{
+	global $conf;
+
+	if (!isModEnabled('creditmanager')) {
+		return;
+	}
+
+	if ($useSessionCache && !empty($_SESSION['creditmanager_menu_flat_ok'])) {
+		return;
+	}
+
+	$module = 'creditmanager';
+	$sql = "UPDATE ".$db->prefix()."menu SET";
+	$sql .= " fk_menu = -1,";
+	$sql .= " fk_mainmenu = 'creditmanager',";
+	$sql .= " fk_leftmenu = NULL";
+	$sql .= " WHERE module = '".$db->escape($module)."'";
+	$sql .= " AND type = 'left'";
+	$sql .= " AND mainmenu = 'creditmanager'";
+	$sql .= " AND entity IN (0, ".((int) $conf->entity).")";
+
+	$db->query($sql);
+
+	if ($useSessionCache) {
+		$_SESSION['creditmanager_menu_flat_ok'] = 1;
+	}
+}
+
+/**
  *  Prepare admin pages header (tabs)
  *
  *  @return	array		Array of tabs

@@ -59,6 +59,7 @@ global $db, $conf, $langs, $user;
 require_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
 dol_include_once('/creditmanager/lib/creditmanager.lib.php');
+creditmanagerEnsureLeftMenuFlat($db);
 
 if (!$user->admin && !$user->hasRight('creditmanager', 'creditmanager_admin')) {
 	accessforbidden();

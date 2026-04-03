@@ -37,6 +37,7 @@ dol_include_once('/creditmanager/class/CreditType.class.php');
 dol_include_once('/creditmanager/class/CreditBalance.class.php');
 dol_include_once('/creditmanager/class/CreditMovement.class.php');
 dol_include_once('/creditmanager/lib/creditmanager.lib.php');
+creditmanagerEnsureLeftMenuFlat($db);
 
 global $db, $conf, $langs, $user;
 
