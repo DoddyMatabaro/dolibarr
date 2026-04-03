@@ -176,6 +176,23 @@ class modCreditManager extends DolibarrModules
 			'user'     => 2,
 		);
 
+		// Left menu - Manual timesheet debit (MVP)
+		$this->menu[$r++] = array(
+			'fk_menu'  => 'fk_mainmenu=creditmanager',
+			'type'     => 'left',
+			'titre'    => 'CreditManagerManualDebit',
+			'prefix'   => 'fas fa-hand-holding-usd fa-fw paddingright pictofixedwidth',
+			'mainmenu' => 'creditmanager',
+			'leftmenu' => 'creditmanager_manual_debit',
+			'url'      => '/custom/creditmanager/timesheets/debit.php',
+			'langs'    => 'creditmanager@creditmanager',
+			'position' => 1025,
+			'enabled'  => 'isModEnabled("creditmanager")',
+			'perms'    => '$user->hasRight("creditmanager","write")',
+			'target'   => '',
+			'user'     => 2,
+		);
+
 		// Left menu - Alerts
 		$this->menu[$r++] = array(
 			'fk_menu'  => 'fk_mainmenu=creditmanager',
