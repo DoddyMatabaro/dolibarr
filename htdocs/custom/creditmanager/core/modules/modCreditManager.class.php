@@ -34,7 +34,7 @@ class modCreditManager extends DolibarrModules
 
 		$this->version = '1.0';
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
-		$this->picto = 'credit';
+		$this->picto = 'bill';
 		$this->editor_name = 'Joel MPUNGA and Doddy MATABARO';
 
 		$this->dirs = array();
@@ -106,13 +106,14 @@ class modCreditManager extends DolibarrModules
 		// Menus
 		$this->menu = array();
 		$r = 0;
+		$menuTopPrefix = 'fas fa-credit-card fa-fw pictofixedwidth';
 
 		// Top menu - appears in the main horizontal bar
 		$this->menu[$r++] = array(
 			'fk_menu'  => '',
 			'type'     => 'top',
 			'titre'    => 'CreditManager',
-			'prefix'   => img_picto('', $this->picto, 'class="pictofixedwidth em092"'),
+			'prefix'   => $menuTopPrefix,
 			'mainmenu' => 'creditmanager',
 			'leftmenu' => '',
 			'url'      => '/custom/creditmanager/index.php',
@@ -129,7 +130,7 @@ class modCreditManager extends DolibarrModules
 			'fk_menu'  => 'fk_mainmenu=creditmanager',
 			'type'     => 'left',
 			'titre'    => 'CreditManagerDashboard',
-			'prefix'   => img_picto('', $this->picto, 'class="paddingright pictofixedwidth em092"'),
+			'prefix'   => 'fas fa-file-invoice-dollar fa-fw paddingright pictofixedwidth',
 			'mainmenu' => 'creditmanager',
 			'leftmenu' => 'creditmanager_dashboard',
 			'url'      => '/custom/creditmanager/index.php',
@@ -146,6 +147,7 @@ class modCreditManager extends DolibarrModules
 			'fk_menu'  => 'fk_mainmenu=creditmanager',
 			'type'     => 'left',
 			'titre'    => 'CreditBalances',
+			'prefix'   => 'fas fa-balance-scale fa-fw paddingright pictofixedwidth',
 			'mainmenu' => 'creditmanager',
 			'leftmenu' => 'creditmanager_balances',
 			'url'      => '/custom/creditmanager/balance_list.php',
@@ -162,6 +164,7 @@ class modCreditManager extends DolibarrModules
 			'fk_menu'  => 'fk_mainmenu=creditmanager',
 			'type'     => 'left',
 			'titre'    => 'CreditMovements',
+			'prefix'   => 'fas fa-exchange-alt fa-fw paddingright pictofixedwidth',
 			'mainmenu' => 'creditmanager',
 			'leftmenu' => 'creditmanager_movements',
 			'url'      => '/custom/creditmanager/movement_list.php',
@@ -178,6 +181,7 @@ class modCreditManager extends DolibarrModules
 			'fk_menu'  => 'fk_mainmenu=creditmanager',
 			'type'     => 'left',
 			'titre'    => 'CreditAlerts',
+			'prefix'   => 'fas fa-bell fa-fw paddingright pictofixedwidth',
 			'mainmenu' => 'creditmanager',
 			'leftmenu' => 'creditmanager_alerts',
 			'url'      => '/custom/creditmanager/alert_list.php',
@@ -194,6 +198,7 @@ class modCreditManager extends DolibarrModules
 			'fk_menu'  => 'fk_mainmenu=creditmanager',
 			'type'     => 'left',
 			'titre'    => 'CreditManagerSetup',
+			'prefix'   => 'fas fa-cog fa-fw paddingright pictofixedwidth',
 			'mainmenu' => 'creditmanager',
 			'leftmenu' => 'creditmanager_admin',
 			'url'      => '/custom/creditmanager/admin/credit_types.php',
@@ -218,6 +223,9 @@ class modCreditManager extends DolibarrModules
 
 		// Keep backward compatibility for UI/legacy queries expecting these fields on llx_element_time.
 		$this->addElementTimeCreditColumns();
+
+		require_once DOL_DOCUMENT_ROOT.'/custom/creditmanager/lib/creditmanager.lib.php';
+		creditmanagerEnsureLeftMenuFlat($this->db, false);
 
 		return $this->_init(array(), $options);
 	}

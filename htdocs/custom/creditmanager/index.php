@@ -34,6 +34,9 @@ if (!$res) {
 /** @var User $user */
 
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
+require_once DOL_DOCUMENT_ROOT.'/custom/creditmanager/lib/creditmanager.lib.php';
+
+creditmanagerEnsureLeftMenuFlat($db);
 
 $langs->loadLangs(array("creditmanager@creditmanager"));
 

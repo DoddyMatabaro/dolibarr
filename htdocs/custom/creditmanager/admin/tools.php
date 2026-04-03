@@ -34,6 +34,8 @@ global $db, $conf, $langs, $user;
 /** @var Translate $langs */
 /** @var User $user */
 
+creditmanagerEnsureLeftMenuFlat($db);
+
 $langs->loadLangs(array('admin', 'creditmanager@creditmanager'));
 
 $form = new Form($db);
