@@ -97,3 +97,81 @@ function creditmanagerAdminPrepareHead()
 
 	return $head;
 }
+
+/**
+ * Read access for internal users (admin/finance/pm/staff).
+ * Portal users are handled separately with creditmanagerCanReadClientPortal().
+ *
+ * @param User $user
+ * @return bool
+ */
+function creditmanagerCanReadModule($user)
+{
+	return !empty($user->rights->creditmanager->read);
+}
+
+/**
+ * Access to admin setup/maintenance screens.
+ *
+ * @param User $user
+ * @return bool
+ */
+function creditmanagerCanManageAdmin($user)
+{
+	return !empty($user->admin) || !empty($user->rights->creditmanager->creditmanager_admin);
+}
+
+/**
+ * Access to credit types management (finance/admin).
+ *
+ * @param User $user
+ * @return bool
+ */
+function creditmanagerCanManageCreditTypes($user)
+{
+	return creditmanagerCanManageAdmin($user) || !empty($user->rights->creditmanager->credit_types_manage);
+}
+
+/**
+ * Access to credit attribution management (finance/admin).
+ *
+ * @param User $user
+ * @return bool
+ */
+function creditmanagerCanManageAttributions($user)
+{
+	return creditmanagerCanManageAdmin($user) || !empty($user->rights->creditmanager->attribution_manage);
+}
+
+/**
+ * Access to manual timesheet debit (pm/admin).
+ *
+ * @param User $user
+ * @return bool
+ */
+function creditmanagerCanManualDebit($user)
+{
+	return creditmanagerCanManageAdmin($user) || !empty($user->rights->creditmanager->timesheet_manual_debit);
+}
+
+/**
+ * Export permission for module reports/lists.
+ *
+ * @param User $user
+ * @return bool
+ */
+function creditmanagerCanExport($user)
+{
+	return creditmanagerCanManageAdmin($user) || !empty($user->rights->creditmanager->reports_export);
+}
+
+/**
+ * Portal read access for users linked to a thirdparty.
+ *
+ * @param User $user
+ * @return bool
+ */
+function creditmanagerCanReadClientPortal($user)
+{
+	return !empty($user->rights->creditmanager->client_portal_read) || !empty($user->rights->creditmanager->creditmanager_client);
+}

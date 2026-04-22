@@ -41,7 +41,7 @@ creditmanagerEnsureLeftMenuFlat($db);
 $langs->loadLangs(array("creditmanager@creditmanager"));
 
 // Access control
-if (!$user->hasRight('creditmanager', 'read')) {
+if (!creditmanagerCanReadModule($user)) {
 	accessforbidden();
 }
 

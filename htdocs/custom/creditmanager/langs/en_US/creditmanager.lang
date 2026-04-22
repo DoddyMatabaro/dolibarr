@@ -4,6 +4,29 @@ Module560000Desc=Manage credit hours (types, balances, timesheet debit)
 
 CreditManager=Credit Manager
 
+# Permissions labels
+CreditManagerPermRead=Read / use credits
+CreditManagerPermWrite=Create / edit credits
+CreditManagerPermDelete=Delete credits
+CreditManagerPermAdmin=Administer Credit Manager module
+CreditManagerPermClientLegacy=View own credits (client portal)
+CreditManagerPermCreditTypesManage=Manage credit types (finance)
+CreditManagerPermAttributionManage=Manage credit attributions (finance)
+CreditManagerPermTimesheetApprove=Approve timesheets with credit type (PM)
+CreditManagerPermTimesheetManualDebit=Manually debit timesheets (PM/Finance)
+CreditManagerPermReportsExport=Export credit reports/lists
+CreditManagerPermClientPortalRead=Access client credit portal
+CreditManagerGroupAdminName=Credit Manager - Admin
+CreditManagerGroupAdminDesc=Default group for Credit Manager administrators
+CreditManagerGroupFinanceName=Credit Manager - Finance
+CreditManagerGroupFinanceDesc=Default group for finance users managing credit types and attributions
+CreditManagerGroupPmName=Credit Manager - PM
+CreditManagerGroupPmDesc=Default group for project managers approving and debiting timesheets
+CreditManagerGroupStaffName=Credit Manager - Staff
+CreditManagerGroupStaffDesc=Default group for staff with read-only access to module lists
+CreditManagerGroupClientName=Credit Manager - Client
+CreditManagerGroupClientDesc=Default group for portal users reading their own credit data
+
 #
 # Menus
 #

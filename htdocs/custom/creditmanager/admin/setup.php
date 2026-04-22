@@ -61,7 +61,7 @@ require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
 dol_include_once('/creditmanager/lib/creditmanager.lib.php');
 creditmanagerEnsureLeftMenuFlat($db);
 
-if (!$user->admin && !$user->hasRight('creditmanager', 'creditmanager_admin')) {
+if (!creditmanagerCanManageAdmin($user)) {
 	accessforbidden();
 }
 
@@ -75,7 +75,7 @@ $form = new Form($db);
  * Actions
  */
 
-if ($action == 'setparam' && ($user->admin || $user->hasRight('creditmanager', 'creditmanager_admin'))) {
+if ($action == 'setparam' && creditmanagerCanManageAdmin($user)) {
 	// Low balance alert threshold
 	$low_balance_threshold = GETPOST('CREDITMANAGER_LOW_BALANCE_THRESHOLD', 'alphanohtml');
 	if ($low_balance_threshold !== '') {

@@ -40,7 +40,7 @@ $langs->loadLangs(array('admin', 'creditmanager@creditmanager'));
 
 $form = new Form($db);
 
-if (!$user->admin && !$user->hasRight('creditmanager', 'creditmanager_admin')) {
+if (!creditmanagerCanManageAdmin($user)) {
 	accessforbidden();
 }
 

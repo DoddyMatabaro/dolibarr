@@ -40,7 +40,7 @@ creditmanagerEnsureLeftMenuFlat($db);
 
 $langs->loadLangs(array("companies", "compta", "creditmanager@creditmanager"));
 
-if (!$user->hasRight('creditmanager', 'read')) {
+if (!creditmanagerCanReadModule($user)) {
 	accessforbidden();
 }
 
@@ -130,7 +130,7 @@ function creditmanager_balance_sum_total($db, $sqlFromWhere)
 
 $whereBase = creditmanager_balance_list_where($db, $search_socid, $search_credit_type, $search_hide_zero);
 
-if ($action === 'exportcsv' && $user->hasRight('creditmanager', 'read')) {
+if ($action === 'exportcsv' && creditmanagerCanExport($user)) {
 	$filename = 'credit_balances_'.dol_print_date(dol_now(), '%Y%m%d%H%M%S').'.csv';
 	header('Content-Type: text/csv; charset=UTF-8');
 	header('Content-Disposition: attachment; filename="'.$filename.'"');

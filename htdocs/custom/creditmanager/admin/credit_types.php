@@ -62,7 +62,7 @@ dol_include_once('/creditmanager/class/CreditType.class.php');
 dol_include_once('/creditmanager/lib/creditmanager.lib.php');
 creditmanagerEnsureLeftMenuFlat($db);
 
-if (!$user->admin && !$user->hasRight('creditmanager', 'creditmanager_admin')) {
+if (!creditmanagerCanManageCreditTypes($user)) {
 	accessforbidden();
 }
 
@@ -121,7 +121,7 @@ if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter.x'
 	$param = '';
 }
 
-if ($action == 'add' && ($user->admin || $user->hasRight('creditmanager', 'creditmanager_admin'))) {
+if ($action == 'add' && creditmanagerCanManageCreditTypes($user)) {
 	$error = 0;
 
 	$object->code = strtoupper(trim(GETPOST('code', 'aZ09')));
@@ -169,7 +169,7 @@ if ($action == 'add' && ($user->admin || $user->hasRight('creditmanager', 'credi
 	}
 }
 
-if ($action == 'update' && $id > 0 && ($user->admin || $user->hasRight('creditmanager', 'creditmanager_admin'))) {
+if ($action == 'update' && $id > 0 && creditmanagerCanManageCreditTypes($user)) {
 	$error = 0;
 
 	$result = $object->fetch($id);
@@ -217,7 +217,7 @@ if ($action == 'update' && $id > 0 && ($user->admin || $user->hasRight('creditma
 	}
 }
 
-if ($action == 'confirm_delete' && $confirm == 'yes' && $id > 0 && ($user->admin || $user->hasRight('creditmanager', 'creditmanager_admin'))) {
+if ($action == 'confirm_delete' && $confirm == 'yes' && $id > 0 && creditmanagerCanManageCreditTypes($user)) {
 	$result = $object->fetch($id);
 	if ($result > 0) {
 		// CreditType::delete() handles soft-delete internally (sets active=0 if used)
@@ -238,7 +238,7 @@ if ($action == 'confirm_delete' && $confirm == 'yes' && $id > 0 && ($user->admin
 	exit;
 }
 
-if ($action == 'activate' && $id > 0 && ($user->admin || $user->hasRight('creditmanager', 'creditmanager_admin'))) {
+if ($action == 'activate' && $id > 0 && creditmanagerCanManageCreditTypes($user)) {
 	$result = $object->fetch($id);
 	if ($result > 0) {
 		$object->active = 1;
@@ -249,7 +249,7 @@ if ($action == 'activate' && $id > 0 && ($user->admin || $user->hasRight('credit
 	exit;
 }
 
-if ($action == 'disable' && $id > 0 && ($user->admin || $user->hasRight('creditmanager', 'creditmanager_admin'))) {
+if ($action == 'disable' && $id > 0 && creditmanagerCanManageCreditTypes($user)) {
 	$result = $object->fetch($id);
 	if ($result > 0) {
 		$object->active = 0;
@@ -260,7 +260,7 @@ if ($action == 'disable' && $id > 0 && ($user->admin || $user->hasRight('creditm
 	exit;
 }
 
-if ($massaction == 'delete' && !empty($toselect) && ($user->admin || $user->hasRight('creditmanager', 'creditmanager_admin'))) {
+if ($massaction == 'delete' && !empty($toselect) && creditmanagerCanManageCreditTypes($user)) {
 	$nbok = 0;
 	foreach ($toselect as $toselectid) {
 		$objecttmp = new CreditType($db);
@@ -563,13 +563,13 @@ if ($resql) {
 }
 
 $newcardbutton = '';
-if ($user->admin || $user->hasRight('creditmanager', 'creditmanager_admin')) {
+if (creditmanagerCanManageCreditTypes($user)) {
 	$newcardbutton .= dolGetButtonTitle($langs->trans('NewCreditType'), '', 'fa fa-plus-circle', $_SERVER['PHP_SELF'].'?action=create&token='.newToken(), '', ($action != 'create' && $action != 'edit'));
 }
 $newcardbutton .= ' '.dolGetButtonTitle($langs->trans('ExportCSV'), '', 'fa fa-download', $_SERVER['PHP_SELF'].'?action=export_csv&token='.newToken(), '', ($action != 'create' && $action != 'edit'));
 
 $massactionbutton = '';
-if ($user->admin || $user->hasRight('creditmanager', 'creditmanager_admin')) {
+if (creditmanagerCanManageCreditTypes($user)) {
 	$arrayofmassactions = array(
 		'delete' => img_picto('', 'delete', 'class="pictofixedwidth"').$langs->trans("Delete"),
 	);
@@ -711,7 +711,7 @@ if ($resql) {
 
 		// Active toggle (switch_on / switch_off)
 		print '<td class="center nowraponall">';
-		if ($user->admin || $user->hasRight('creditmanager', 'creditmanager_admin')) {
+		if (creditmanagerCanManageCreditTypes($user)) {
 			if ($obj->active) {
 				print '<a class="reposition" href="'.$_SERVER['PHP_SELF'].'?action=disable&rowid='.$obj->rowid.'&token='.newToken().$param.'">';
 				print img_picto($langs->trans("Activated"), 'switch_on', 'class="size15x"');
@@ -731,7 +731,7 @@ if ($resql) {
 		print '</td>';
 
 		print '<td class="center nowraponall">';
-		if ($user->admin || $user->hasRight('creditmanager', 'creditmanager_admin')) {
+		if (creditmanagerCanManageCreditTypes($user)) {
 			print '<a class="reposition editfielda paddingleft paddingright" href="'.$_SERVER['PHP_SELF'].'?action=edit&rowid='.$obj->rowid.'&token='.newToken().'">';
 			print img_edit();
 			print '</a>';

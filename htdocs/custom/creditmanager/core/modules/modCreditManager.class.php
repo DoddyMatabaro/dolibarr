@@ -23,6 +23,7 @@ class modCreditManager extends DolibarrModules
 	public function __construct($db)
 	{
 		global $langs;
+		$langs->loadLangs(array("creditmanager@creditmanager"));
 
 		$this->db = $db;
 		$this->numero = 560000;
@@ -70,38 +71,80 @@ class modCreditManager extends DolibarrModules
 
 		$r++;
 		$this->rights[$r][0] = $this->numero + $r;
-		$this->rights[$r][1] = 'Lire / utiliser les crédits';
+		$this->rights[$r][1] = $langs->trans('CreditManagerPermRead');
 		$this->rights[$r][2] = 'r';
 		$this->rights[$r][3] = 0;
 		$this->rights[$r][4] = 'read';
 
 		$r++;
 		$this->rights[$r][0] = $this->numero + $r;
-		$this->rights[$r][1] = 'Créer / modifier les crédits';
+		$this->rights[$r][1] = $langs->trans('CreditManagerPermWrite');
 		$this->rights[$r][2] = 'w';
 		$this->rights[$r][3] = 0;
 		$this->rights[$r][4] = 'write';
 
 		$r++;
 		$this->rights[$r][0] = $this->numero + $r;
-		$this->rights[$r][1] = 'Supprimer les crédits';
+		$this->rights[$r][1] = $langs->trans('CreditManagerPermDelete');
 		$this->rights[$r][2] = 'd';
 		$this->rights[$r][3] = 0;
 		$this->rights[$r][4] = 'delete';
 
 		$r++;
 		$this->rights[$r][0] = $this->numero + $r;
-		$this->rights[$r][1] = 'Administrer le module Credit Manager';
+		$this->rights[$r][1] = $langs->trans('CreditManagerPermAdmin');
 		$this->rights[$r][2] = 'w';
 		$this->rights[$r][3] = 0;
 		$this->rights[$r][4] = 'creditmanager_admin';
 
 		$r++;
 		$this->rights[$r][0] = $this->numero + $r;
-		$this->rights[$r][1] = 'Voir ses crédits (portail client)';
+		$this->rights[$r][1] = $langs->trans('CreditManagerPermClientLegacy');
 		$this->rights[$r][2] = 'r';
 		$this->rights[$r][3] = 0;
 		$this->rights[$r][4] = 'creditmanager_client';
+
+		$r++;
+		$this->rights[$r][0] = $this->numero + $r;
+		$this->rights[$r][1] = $langs->trans('CreditManagerPermCreditTypesManage');
+		$this->rights[$r][2] = 'w';
+		$this->rights[$r][3] = 0;
+		$this->rights[$r][4] = 'credit_types_manage';
+
+		$r++;
+		$this->rights[$r][0] = $this->numero + $r;
+		$this->rights[$r][1] = $langs->trans('CreditManagerPermAttributionManage');
+		$this->rights[$r][2] = 'w';
+		$this->rights[$r][3] = 0;
+		$this->rights[$r][4] = 'attribution_manage';
+
+		$r++;
+		$this->rights[$r][0] = $this->numero + $r;
+		$this->rights[$r][1] = $langs->trans('CreditManagerPermTimesheetApprove');
+		$this->rights[$r][2] = 'w';
+		$this->rights[$r][3] = 0;
+		$this->rights[$r][4] = 'timesheet_approve';
+
+		$r++;
+		$this->rights[$r][0] = $this->numero + $r;
+		$this->rights[$r][1] = $langs->trans('CreditManagerPermTimesheetManualDebit');
+		$this->rights[$r][2] = 'w';
+		$this->rights[$r][3] = 0;
+		$this->rights[$r][4] = 'timesheet_manual_debit';
+
+		$r++;
+		$this->rights[$r][0] = $this->numero + $r;
+		$this->rights[$r][1] = $langs->trans('CreditManagerPermReportsExport');
+		$this->rights[$r][2] = 'r';
+		$this->rights[$r][3] = 0;
+		$this->rights[$r][4] = 'reports_export';
+
+		$r++;
+		$this->rights[$r][0] = $this->numero + $r;
+		$this->rights[$r][1] = $langs->trans('CreditManagerPermClientPortalRead');
+		$this->rights[$r][2] = 'r';
+		$this->rights[$r][3] = 0;
+		$this->rights[$r][4] = 'client_portal_read';
 
 		// Menus
 		$this->menu = array();
@@ -136,8 +179,8 @@ class modCreditManager extends DolibarrModules
 			'url'      => '/custom/creditmanager/index.php',
 			'langs'    => 'creditmanager@creditmanager',
 			'position' => 1001,
-			'enabled'  => 'isModEnabled("creditmanager")',
-			'perms'    => '$user->hasRight("creditmanager","read")',
+			'enabled'  => 'isModEnabled("creditmanager") && $user->hasRight("creditmanager","read")',
+			'perms'    => '1',
 			'target'   => '',
 			'user'     => 2,
 		);
@@ -153,8 +196,8 @@ class modCreditManager extends DolibarrModules
 			'url'      => '/custom/creditmanager/balance_list.php',
 			'langs'    => 'creditmanager@creditmanager',
 			'position' => 1010,
-			'enabled'  => 'isModEnabled("creditmanager")',
-			'perms'    => '$user->hasRight("creditmanager","read")',
+			'enabled'  => 'isModEnabled("creditmanager") && $user->hasRight("creditmanager","read")',
+			'perms'    => '1',
 			'target'   => '',
 			'user'     => 2,
 		);
@@ -170,8 +213,8 @@ class modCreditManager extends DolibarrModules
 			'url'      => '/custom/creditmanager/movement_list.php',
 			'langs'    => 'creditmanager@creditmanager',
 			'position' => 1020,
-			'enabled'  => 'isModEnabled("creditmanager")',
-			'perms'    => '$user->hasRight("creditmanager","read")',
+			'enabled'  => 'isModEnabled("creditmanager") && $user->hasRight("creditmanager","read")',
+			'perms'    => '1',
 			'target'   => '',
 			'user'     => 2,
 		);
@@ -187,8 +230,8 @@ class modCreditManager extends DolibarrModules
 			'url'      => '/custom/creditmanager/timesheets/debit.php',
 			'langs'    => 'creditmanager@creditmanager',
 			'position' => 1025,
-			'enabled'  => 'isModEnabled("creditmanager")',
-			'perms'    => '$user->hasRight("creditmanager","write")',
+			'enabled'  => 'isModEnabled("creditmanager") && ($user->hasRight("creditmanager","timesheet_manual_debit") || $user->hasRight("creditmanager","creditmanager_admin"))',
+			'perms'    => '1',
 			'target'   => '',
 			'user'     => 2,
 		);
@@ -204,8 +247,8 @@ class modCreditManager extends DolibarrModules
 			'url'      => '/custom/creditmanager/alert_list.php',
 			'langs'    => 'creditmanager@creditmanager',
 			'position' => 1030,
-			'enabled'  => 'isModEnabled("creditmanager")',
-			'perms'    => '$user->hasRight("creditmanager","read")',
+			'enabled'  => 'isModEnabled("creditmanager") && $user->hasRight("creditmanager","read")',
+			'perms'    => '1',
 			'target'   => '',
 			'user'     => 2,
 		);
@@ -221,8 +264,8 @@ class modCreditManager extends DolibarrModules
 			'url'      => '/custom/creditmanager/admin/credit_types.php',
 			'langs'    => 'creditmanager@creditmanager',
 			'position' => 1090,
-			'enabled'  => 'isModEnabled("creditmanager")',
-			'perms'    => '$user->hasRight("creditmanager","creditmanager_admin")',
+			'enabled'  => 'isModEnabled("creditmanager") && ($user->hasRight("creditmanager","creditmanager_admin") || $user->hasRight("creditmanager","credit_types_manage") || $user->hasRight("creditmanager","attribution_manage"))',
+			'perms'    => '1',
 			'target'   => '',
 			'user'     => 0,
 		);
@@ -244,7 +287,106 @@ class modCreditManager extends DolibarrModules
 		require_once DOL_DOCUMENT_ROOT.'/custom/creditmanager/lib/creditmanager.lib.php';
 		creditmanagerEnsureLeftMenuFlat($this->db, false);
 
-		return $this->_init(array(), $options);
+		$initResult = $this->_init(array(), $options);
+		if ($initResult > 0) {
+			$this->ensureDefaultUserGroups();
+		}
+
+		return $initResult;
+	}
+
+	/**
+	 * Create and (re)apply default Credit Manager groups.
+	 *
+	 * @return void
+	 */
+	private function ensureDefaultUserGroups()
+	{
+		global $conf;
+		global $langs;
+
+		require_once DOL_DOCUMENT_ROOT.'/user/class/usergroup.class.php';
+
+		$rightIds = $this->getCreditManagerRightIds();
+		if (empty($rightIds)) {
+			return;
+		}
+
+		$groupDefs = array(
+			array(
+				'name' => $langs->trans('CreditManagerGroupAdminName'),
+				'note' => $langs->trans('CreditManagerGroupAdminDesc'),
+				'rights' => array_keys($rightIds),
+			),
+			array(
+				'name' => $langs->trans('CreditManagerGroupFinanceName'),
+				'note' => $langs->trans('CreditManagerGroupFinanceDesc'),
+				'rights' => array('read', 'credit_types_manage', 'attribution_manage', 'timesheet_manual_debit', 'reports_export'),
+			),
+			array(
+				'name' => $langs->trans('CreditManagerGroupPmName'),
+				'note' => $langs->trans('CreditManagerGroupPmDesc'),
+				'rights' => array('read', 'timesheet_approve', 'timesheet_manual_debit'),
+			),
+			array(
+				'name' => $langs->trans('CreditManagerGroupStaffName'),
+				'note' => $langs->trans('CreditManagerGroupStaffDesc'),
+				'rights' => array('read'),
+			),
+			array(
+				'name' => $langs->trans('CreditManagerGroupClientName'),
+				'note' => $langs->trans('CreditManagerGroupClientDesc'),
+				'rights' => array('creditmanager_client', 'client_portal_read'),
+			),
+		);
+
+		foreach ($groupDefs as $groupDef) {
+			$group = new UserGroup($this->db);
+			$fetched = $group->fetch(0, $groupDef['name']);
+			if ($fetched <= 0) {
+				$group->name = $groupDef['name'];
+				$group->note = $groupDef['note'];
+				$group->entity = $conf->entity;
+				$created = $group->create();
+				if ($created <= 0) {
+					continue;
+				}
+			}
+
+			$group->delrights(0, 'creditmanager');
+			foreach ($groupDef['rights'] as $rightCode) {
+				if (isset($rightIds[$rightCode])) {
+					$group->addrights($rightIds[$rightCode]);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Return right code => right id for Credit Manager.
+	 *
+	 * @return array<string,int>
+	 */
+	private function getCreditManagerRightIds()
+	{
+		global $conf;
+
+		$ids = array();
+		$sql = "SELECT id, perms";
+		$sql .= " FROM ".$this->db->prefix()."rights_def";
+		$sql .= " WHERE module = 'creditmanager'";
+		$sql .= " AND entity = ".((int) $conf->entity);
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			return $ids;
+		}
+
+		while ($obj = $this->db->fetch_object($resql)) {
+			$ids[$obj->perms] = (int) $obj->id;
+		}
+		$this->db->free($resql);
+
+		return $ids;
 	}
 
 	private function addElementTimeCreditColumns()

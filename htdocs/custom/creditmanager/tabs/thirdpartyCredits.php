@@ -28,6 +28,7 @@ require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.form.class.php';
 require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT.'/custom/creditmanager/class/CreditType.class.php';
+require_once DOL_DOCUMENT_ROOT.'/custom/creditmanager/lib/creditmanager.lib.php';
 
 /**
  * @var Conf $conf
@@ -62,7 +63,7 @@ if (!$sortfield) {
 }
 
 // Access control
-if (!$user->hasRight('creditmanager', 'read')) {
+if (!creditmanagerCanReadModule($user) && !creditmanagerCanReadClientPortal($user)) {
 	accessforbidden();
 	exit;
 }
@@ -92,7 +93,7 @@ $action = GETPOST('action', 'aZ09');
 $token = newToken();
 
 // Export actions
-if ($action === 'exportcsv' && $socid > 0 && $user->hasRight('creditmanager', 'read')) {
+if ($action === 'exportcsv' && $socid > 0 && creditmanagerCanExport($user)) {
 	$filename = 'credit_history_' . $socid . '_' . dol_print_date(dol_now(), '%Y%m%d%H%M%S') . '.csv';
 	header('Content-Type: text/csv');
 	header('Content-Disposition: attachment; filename="' . $filename . '"');
@@ -146,7 +147,7 @@ if ($action === 'exportcsv' && $socid > 0 && $user->hasRight('creditmanager', 'r
 	exit;
 }
 
-if ($action === 'exportpdf' && $socid > 0 && $user->hasRight('creditmanager', 'read')) {
+if ($action === 'exportpdf' && $socid > 0 && creditmanagerCanExport($user)) {
 	// PDF export - use Dolibarr PDF utilities
 	require_once DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php';
 	$outputlangs = $langs;
@@ -286,7 +287,7 @@ if ($socid > 0) {
 	}
 
 	// Action buttons (if admin/finance)
-	if (($user->hasRight('creditmanager', 'creditmanager_admin') || $user->hasRight('creditmanager', 'write')) && empty($user->socid)) {
+	if (creditmanagerCanManageAttributions($user) && empty($user->socid)) {
 		print '<tr class="liste_titre">';
 		print '<td colspan="2">';
 		$attrUrl = DOL_URL_ROOT . '/custom/creditmanager/admin/attribution.php?socid=' . $socid . '&action=add&token=' . $token;
