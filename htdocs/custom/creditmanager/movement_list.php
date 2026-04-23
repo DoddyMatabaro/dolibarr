@@ -40,7 +40,7 @@ creditmanagerEnsureLeftMenuFlat($db);
 
 $langs->loadLangs(array("companies", "compta", "creditmanager@creditmanager"));
 
-if (!$user->hasRight('creditmanager', 'read')) {
+if (!creditmanagerCanReadModule($user)) {
 	accessforbidden();
 }
 
@@ -136,7 +136,7 @@ $filters = array(
 );
 $whereSql = creditmanager_movement_sql_where($db, $filters);
 
-if ($action === 'exportcsv' && $user->hasRight('creditmanager', 'read')) {
+if ($action === 'exportcsv' && creditmanagerCanExport($user)) {
 	$filename = 'credit_movements_'.dol_print_date(dol_now(), '%Y%m%d%H%M%S').'.csv';
 	header('Content-Type: text/csv; charset=UTF-8');
 	header('Content-Disposition: attachment; filename="'.$filename.'"');

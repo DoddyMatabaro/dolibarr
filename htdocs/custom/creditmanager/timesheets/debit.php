@@ -44,7 +44,7 @@ creditmanagerEnsureLeftMenuFlat($db);
 
 $langs->loadLangs(array("projects", "companies", "creditmanager@creditmanager"));
 
-if (!$user->hasRight('creditmanager', 'write')) {
+if (!creditmanagerCanManualDebit($user)) {
 	accessforbidden();
 }
 

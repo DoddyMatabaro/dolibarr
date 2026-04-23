@@ -50,7 +50,7 @@ global $db, $conf, $langs, $user;
 $langs->loadLangs(array('admin', 'errors', 'companies', 'creditmanager@creditmanager'));
 
 // Security check: restrict to users with write rights on creditmanager
-if (empty($user->rights->creditmanager->write)) {
+if (!creditmanagerCanManageAttributions($user)) {
     accessforbidden();
 }
 
@@ -104,7 +104,7 @@ define('CREDITMVT_TYPE_ATTRIBUTION_CANCEL', 'ATTRIBUTION_CANCEL');
 $error = 0;
 
 // Add single attribution
-if ($action === 'add' && $user->rights->creditmanager->write) {
+if ($action === 'add' && creditmanagerCanManageAttributions($user)) {
     if (!GETPOST('cancel', 'alpha')) {
         $allowNegative = getDolGlobalInt('CREDITMANAGER_ALLOW_NEGATIVE_ATTRIBUTION', 0);
         $maxAmount = (float) getDolGlobalString('CREDITMANAGER_MAX_ATTRIBUTION_AMOUNT', '0');
@@ -132,7 +132,7 @@ if ($action === 'add' && $user->rights->creditmanager->write) {
 }
 
 // Edit attribution (amount/description only)
-if ($action === 'update' && $user->rights->creditmanager->write && $attrid > 0) {
+if ($action === 'update' && creditmanagerCanManageAttributions($user) && $attrid > 0) {
     if (!GETPOST('cancel', 'alpha')) {
         $db->begin();
 
@@ -215,7 +215,7 @@ if ($action === 'update' && $user->rights->creditmanager->write && $attrid > 0) 
 }
 
 // Cancel attribution (business delete)
-if ($action === 'confirm_delete' && $confirm === 'yes' && $user->rights->creditmanager->write && $attrid > 0) {
+if ($action === 'confirm_delete' && $confirm === 'yes' && creditmanagerCanManageAttributions($user) && $attrid > 0) {
     $db->begin();
 
     $sql = 'SELECT rowid, fk_soc, fk_credit_type, amount';
@@ -275,7 +275,7 @@ if ($action === 'confirm_delete' && $confirm === 'yes' && $user->rights->creditm
 }
 
 // Batch attribution (same type + amount for multiple clients)
-if ($action === 'addbatch' && $user->rights->creditmanager->write) {
+if ($action === 'addbatch' && creditmanagerCanManageAttributions($user)) {
     $toselect = GETPOST('toselect', 'array:int'); // array of socid
     if (!is_array($toselect)) {
         $toselect = array();
@@ -313,7 +313,7 @@ if ($action === 'addbatch' && $user->rights->creditmanager->write) {
 }
 
 // Import CSV (simple implementation: socid;credit_type_code;amount;description)
-if ($action === 'importcsv' && $user->rights->creditmanager->write) {
+if ($action === 'importcsv' && creditmanagerCanManageAttributions($user)) {
     if (!empty($_FILES['importfile']['tmp_name'])) {
         $importFile = $_FILES['importfile']['tmp_name'];
         $handle = fopen($importFile, 'r');
@@ -372,7 +372,7 @@ if ($action === 'importcsv' && $user->rights->creditmanager->write) {
 }
 
 // Export CSV of attribution history (with current filters)
-if ($action === 'exportcsv' && $user->rights->creditmanager->read) {
+if ($action === 'exportcsv' && creditmanagerCanExport($user)) {
     $filename = 'credit_attributions_' . dol_print_date(dol_now(), '%Y%m%d%H%M%S') . '.csv';
     header('Content-Type: text/csv');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
