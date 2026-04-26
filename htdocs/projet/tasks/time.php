@@ -131,11 +131,26 @@ $childids = $user->getAllChildIds(1);
 // Initialize a technical object to manage hooks of page. Note that conf->hooks_modules contains an array of hook context
 //$object = new TaskTime($db);
 $hookmanager->initHooks(array('projecttasktime', 'globalcard'));
-
 if (isModEnabled("creditmanager")) {
 	require_once DOL_DOCUMENT_ROOT.'/custom/creditmanager/class/html.formcreditmanager.class.php';
 	$formCreditType = new FormCreditTypes($db);
-	$arrayOfCreditStatusOfTimeSpent = array(""=>$langs->trans(""), "DRAFT"=>$langs->trans("DRAFT"), "SUBMITTED"=>$langs->trans("SUBMITTED"), "APPROVED"=>$langs->trans("APPROVED"), "DEBITED"=>$langs->trans("DEBITED"), "REJECTED"=>$langs->trans("REJECTED"));
+	// Find the group of the user
+	$usergroup = new UserGroup($db);
+	$groupslist = $usergroup->listGroupsForUser($user->id, false);
+	$groupOfCurrentUser = [];
+	foreach($groupslist as $group) {
+		$groupOfCurrentUser[] = $group->nom;
+		echo var_dump($group->nom);
+	}
+	if (in_array("Credit Manager - Staff",$groupOfCurrentUser)) {
+		$arrayOfCreditStatusOfTimeSpent = array(""=>$langs->trans(""), "DRAFT"=>$langs->trans("DRAFT"), "SUBMITTED"=>$langs->trans("SUBMITTED"));
+	} elseif (in_array("Credit Manager - PM",$groupOfCurrentUser)) {
+		$arrayOfCreditStatusOfTimeSpent = array(""=>$langs->trans(""), "SUBMITTED"=>$langs->trans("SUBMITTED"), "APPROVED"=>$langs->trans("APPROVED"), "DEBITED"=>$langs->trans("DEBITED"), "REJECTED"=>$langs->trans("REJECTED"));
+	} elseif (in_array("Credit Manager - Finance",$groupOfCurrentUser) || in_array("Credit Manager - Admin",$groupOfCurrentUser)) {
+		$arrayOfCreditStatusOfTimeSpent = array(""=>$langs->trans(""), "DRAFT"=>$langs->trans("DRAFT"), "SUBMITTED"=>$langs->trans("SUBMITTED"), "APPROVED"=>$langs->trans("APPROVED"), "DEBITED"=>$langs->trans("DEBITED"), "REJECTED"=>$langs->trans("REJECTED"));
+	} else {
+		$arrayOfCreditStatusOfTimeSpent = [];
+	}
 	$arrayOfCreditType = $formCreditType->select_credit_types_list('','','','','','','','','',true);
 }
 
@@ -1332,7 +1347,10 @@ if (($id > 0 || !empty($ref)) || $projectidforalltimes > 0 || $allprojectforuser
 		$arrayfields['t.note'] = array('label' => $langs->trans("Note"), 'checked' => '1');
 		if(isModEnabled('creditmanager')) {
 			$arrayfields['t.credit_status'] = array('label' => $langs->trans("Credit Status"), 'checked' => '1');
-			$arrayfields['t.fk_credit_type'] = array('label' => $langs->trans("Assessment"), 'checked' => '1');
+			if (! (in_array("Credit Manager - Staff",$groupOfCurrentUser))) {
+				$arrayfields['t.fk_credit_type'] = array('label' => $langs->trans("Assessment"), 'checked' => '1');
+			}
+
 		}
 
 		if (isModEnabled('service') && !empty($projectstatic->thirdparty) && $projectstatic->thirdparty->id > 0 && $projectstatic->usage_bill_time) {
@@ -1631,7 +1649,10 @@ if (($id > 0 || !empty($ref)) || $projectidforalltimes > 0 || $allprojectforuser
 		$sql = "SELECT t.rowid, t.fk_element, t.element_date, t.element_datehour, t.element_date_withhour, t.element_duration, t.fk_user, t.note, t.thm,";
 		$sql .= " t.fk_product,";
 		if(isModEnabled('creditmanager')) {
-			$sql .= " t.fk_credit_type, t.credit_status,";
+			if (! (in_array("Credit Manager - Staff",$groupOfCurrentUser))) {
+				$sql .= " t.fk_credit_type,";
+			}
+			$sql .= "t.credit_status,";
 		}
 		$sql .= " pt.ref, pt.label, pt.fk_projet,";
 		$sql .= " u.lastname, u.firstname, u.login, u.photo, u.gender, u.statut as user_status,";
@@ -1664,6 +1685,9 @@ if (($id > 0 || !empty($ref)) || $projectidforalltimes > 0 || $allprojectforuser
 		$reshook = $hookmanager->executeHooks('printFieldListFrom', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
 		$sql .= $hookmanager->resPrint;
 		$sql .= " WHERE elementtype = 'task'";
+		if ((in_array("Credit Manager - PM",$groupOfCurrentUser))) {
+			$sql .= " AND (t.credit_status <> 'DRAFT')";
+		}
 		$sql .= " AND p.entity IN (".getEntity('project').")";
 		if (!$user->hasRight('projet', 'all', 'lire')) {
 			// Get list of project id allowed to user (in a string list separated by comma)
@@ -1857,7 +1881,9 @@ if (($id > 0 || !empty($ref)) || $projectidforalltimes > 0 || $allprojectforuser
 
 			if (isModEnabled("creditmanager")) {
 				print '<td>'.$langs->trans("State of timesheet").'</td>';
-				print '<td>'.$langs->trans("Assessment").'</td>';
+				if (! (in_array("Credit Manager - Staff",$groupOfCurrentUser))) {
+					print '<td>'.$langs->trans("Assessment").'</td>';
+				}
 			}
 			// Hook fields
 
@@ -1950,9 +1976,11 @@ if (($id > 0 || !empty($ref)) || $projectidforalltimes > 0 || $allprojectforuser
 				print '<td>';
 				print $form->selectarray('timespent_credit_status', $arrayOfCreditStatusOfTimeSpent, 'timespent_credit_status', 0, 0, 0, '', 0, 0, 0, '', 'onrightofpage width200');
 				print '</td>';
-				print '<td>';
-				print $formCreditType->select_credit_types_list(0, 'timespent_fk_credit_type');
-				print '</td>';
+				if (! (in_array("Credit Manager - Staff",$groupOfCurrentUser))) {
+					print '<td>';
+					print $formCreditType->select_credit_types_list(0, 'timespent_fk_credit_type');
+					print '</td>';
+				}
 			}
 
 			// Fields from hook

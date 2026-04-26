@@ -67,6 +67,7 @@ CreditManagerSetup=Setup
 CreditManagerDashboardDescription=Welcome to Credit Manager. Use the sidebar to navigate between balances, movements and alerts.
 CreditManagerStatsPlaceholder=Statistics will be displayed here once data is available.
 Statistics=Statistics
+CreditManagerAllTimeSheet=Manage all timesheets
 
 #
 # Admin tabs

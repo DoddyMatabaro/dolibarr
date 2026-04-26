@@ -253,6 +253,23 @@ class modCreditManager extends DolibarrModules
 			'user'     => 2,
 		);
 
+		// Left menu - Admin section1 (separator)
+		$this->menu[$r++] = array(
+			'fk_menu'  => 'fk_mainmenu=creditmanager',
+			'type'     => 'left',
+			'titre'    => 'CreditManagerAllTimeSheet',
+			'prefix'   => 'fas fa-clock fa-fw paddingright pictofixedwidth',
+			'mainmenu' => 'creditmanager',
+			'leftmenu' => 'creditmanager_alltm',
+			'url'      => '/projet/tasks/time.php',
+			'langs'    => 'creditmanager@creditmanager',
+			'position' => 1035,
+			'enabled'  => 'isModEnabled("creditmanager")',
+			'perms'    => '$user->hasRight("creditmanager","read")',
+			'target'   => '',
+			'user'     => 2,
+		);
+
 		// Left menu - Admin section (separator)
 		$this->menu[$r++] = array(
 			'fk_menu'  => 'fk_mainmenu=creditmanager',

@@ -67,6 +67,7 @@ CreditManagerSetup=Configuration
 CreditManagerDashboardDescription=Bienvenue dans Credit Manager. Utilisez le menu latéral pour naviguer entre les soldes, mouvements et alertes.
 CreditManagerStatsPlaceholder=Les statistiques seront affichées ici une fois les données disponibles.
 Statistics=Statistiques
+CreditManagerAllTimeSheet=Gerer les fiches de temps
 
 #
 # Onglets admin
