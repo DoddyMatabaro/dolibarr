@@ -1,0 +1,254 @@
+<?php
+/* Copyright (C) 2026  Credit Manager module for Dolibarr
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ */
+
+/**
+ * \file        htdocs/custom/creditmanager/reports/class/CreditReport.class.php
+ * \ingroup     creditmanager
+ * \brief       Reporting queries for credit consumption/forecast/budget.
+ */
+
+require_once DOL_DOCUMENT_ROOT.'/core/class/commonobject.class.php';
+
+class CreditReport extends CommonObject
+{
+	/**
+	 * @var DoliDB
+	 */
+	public $db;
+
+	/**
+	 * @param DoliDB $db
+	 */
+	public function __construct(DoliDB $db)
+	{
+		$this->db = $db;
+	}
+
+	/**
+	 * Build SQL IN list from scalar/array values.
+	 *
+	 * @param int|array $value
+	 * @return string
+	 */
+	private function sqlInList($value)
+	{
+		if (is_array($value)) {
+			$values = array_filter(array_map('intval', $value), function ($v) {
+				return $v > 0;
+			});
+		} else {
+			$v = (int) $value;
+			$values = $v > 0 ? array($v) : array();
+		}
+
+		return empty($values) ? '' : implode(',', $values);
+	}
+
+	/**
+	 * Consumption report for a period, optionally filtered.
+	 *
+	 * @param int     $date_start
+	 * @param int     $date_end
+	 * @param int|array $fk_soc
+	 * @param int|array $fk_credit_type
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function generateConsumptionReport($date_start, $date_end, $fk_soc = 0, $fk_credit_type = 0)
+	{
+		$rows = array();
+		$entityMovement = getEntity('credits_movement');
+		$entitySoc = getEntity('societe');
+		$entityType = getEntity('credits_type');
+
+		$sql = "SELECT m.fk_soc, s.nom as socname, m.fk_credit_type, t.code as credit_code, t.label as credit_label,";
+		$sql .= " DATE_FORMAT(m.date_movement, '%Y-%m') as month_key,";
+		$sql .= " SUM(CASE WHEN m.amount < 0 THEN ABS(m.amount) ELSE 0 END) as consumed_hours,";
+		$sql .= " SUM(CASE WHEN m.amount > 0 THEN m.amount ELSE 0 END) as added_hours,";
+		$sql .= " SUM(m.amount) as net_amount,";
+		$sql .= " COUNT(m.rowid) as nb_movements";
+		$sql .= " FROM ".MAIN_DB_PREFIX."credits_movements as m";
+		$sql .= " INNER JOIN ".MAIN_DB_PREFIX."societe as s ON s.rowid = m.fk_soc";
+		$sql .= " INNER JOIN ".MAIN_DB_PREFIX."credits_types as t ON t.rowid = m.fk_credit_type";
+		$sql .= " WHERE m.entity IN (".$entityMovement.")";
+		$sql .= " AND s.entity IN (".$entitySoc.")";
+		$sql .= " AND t.entity IN (".$entityType.")";
+		$sql .= " AND m.date_movement >= '".$this->db->idate($date_start)."'";
+		$sql .= " AND m.date_movement <= '".$this->db->idate($date_end)."'";
+
+		$socIn = $this->sqlInList($fk_soc);
+		if ($socIn !== '') {
+			$sql .= " AND m.fk_soc IN (".$socIn.")";
+		}
+		$typeIn = $this->sqlInList($fk_credit_type);
+		if ($typeIn !== '') {
+			$sql .= " AND m.fk_credit_type IN (".$typeIn.")";
+		}
+
+		$sql .= " GROUP BY m.fk_soc, s.nom, m.fk_credit_type, t.code, t.label, month_key";
+		$sql .= " ORDER BY month_key ASC, s.nom ASC, t.code ASC";
+
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			$this->error = $this->db->lasterror();
+			return $rows;
+		}
+
+		while ($obj = $this->db->fetch_object($resql)) {
+			$rows[] = array(
+				'fk_soc' => (int) $obj->fk_soc,
+				'socname' => $obj->socname,
+				'fk_credit_type' => (int) $obj->fk_credit_type,
+				'credit_code' => $obj->credit_code,
+				'credit_label' => $obj->credit_label,
+				'month_key' => $obj->month_key,
+				'consumed_hours' => (float) $obj->consumed_hours,
+				'added_hours' => (float) $obj->added_hours,
+				'net_amount' => (float) $obj->net_amount,
+				'nb_movements' => (int) $obj->nb_movements,
+			);
+		}
+		$this->db->free($resql);
+
+		return $rows;
+	}
+
+	/**
+	 * Forecast balance exhaustion from recent average consumption.
+	 *
+	 * @param int|array $fk_soc
+	 * @param int|array $fk_credit_type
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function calculateForecast($fk_soc = 0, $fk_credit_type = 0)
+	{
+		$rows = array();
+		$entityBalance = getEntity('credits_balance');
+		$entitySoc = getEntity('societe');
+		$entityType = getEntity('credits_type');
+		$threeMonthsAgo = dol_time_plus_duree(dol_now(), -3, 'm');
+
+		$sql = "SELECT b.fk_soc, s.nom as socname, b.fk_credit_type, t.code as credit_code, t.label as credit_label,";
+		$sql .= " b.balance as current_balance,";
+		$sql .= " COALESCE(cons.avg_monthly_consumption, 0) as avg_monthly_consumption";
+		$sql .= " FROM ".MAIN_DB_PREFIX."credits_balance as b";
+		$sql .= " INNER JOIN ".MAIN_DB_PREFIX."societe as s ON s.rowid = b.fk_soc";
+		$sql .= " INNER JOIN ".MAIN_DB_PREFIX."credits_types as t ON t.rowid = b.fk_credit_type";
+		$sql .= " LEFT JOIN (";
+		$sql .= " SELECT m.fk_soc, m.fk_credit_type, SUM(ABS(m.amount)) / 3 as avg_monthly_consumption";
+		$sql .= " FROM ".MAIN_DB_PREFIX."credits_movements as m";
+		$sql .= " WHERE m.entity IN (".getEntity('credits_movement').")";
+		$sql .= " AND m.amount < 0";
+		$sql .= " AND m.date_movement >= '".$this->db->idate($threeMonthsAgo)."'";
+		$sql .= " GROUP BY m.fk_soc, m.fk_credit_type";
+		$sql .= " ) as cons ON cons.fk_soc = b.fk_soc AND cons.fk_credit_type = b.fk_credit_type";
+		$sql .= " WHERE b.entity IN (".$entityBalance.")";
+		$sql .= " AND s.entity IN (".$entitySoc.")";
+		$sql .= " AND t.entity IN (".$entityType.")";
+		$sql .= " AND t.active = 1";
+
+		$socIn = $this->sqlInList($fk_soc);
+		if ($socIn !== '') {
+			$sql .= " AND b.fk_soc IN (".$socIn.")";
+		}
+		$typeIn = $this->sqlInList($fk_credit_type);
+		if ($typeIn !== '') {
+			$sql .= " AND b.fk_credit_type IN (".$typeIn.")";
+		}
+		$sql .= " ORDER BY s.nom ASC, t.code ASC";
+
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			$this->error = $this->db->lasterror();
+			return $rows;
+		}
+
+		while ($obj = $this->db->fetch_object($resql)) {
+			$avg = (float) $obj->avg_monthly_consumption;
+			$balance = (float) $obj->current_balance;
+			$months = $avg > 0 ? ($balance / $avg) : null;
+
+			$status = 'safe';
+			if ($months !== null && $months < 1) {
+				$status = 'critical';
+			} elseif ($months !== null && $months < 3) {
+				$status = 'warning';
+			}
+
+			$rows[] = array(
+				'fk_soc' => (int) $obj->fk_soc,
+				'socname' => $obj->socname,
+				'fk_credit_type' => (int) $obj->fk_credit_type,
+				'credit_code' => $obj->credit_code,
+				'credit_label' => $obj->credit_label,
+				'current_balance' => $balance,
+				'avg_monthly_consumption' => $avg,
+				'months_remaining' => $months,
+				'status' => $status,
+			);
+		}
+		$this->db->free($resql);
+
+		return $rows;
+	}
+
+	/**
+	 * Compare yearly budget (attributions) versus real usage (debits).
+	 *
+	 * @param int $year
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function compareBudgetVsReal($year)
+	{
+		$rows = array();
+		$start = dol_mktime(0, 0, 0, 1, 1, (int) $year);
+		$end = dol_mktime(23, 59, 59, 12, 31, (int) $year);
+
+		$sql = "SELECT m.fk_soc, s.nom as socname, m.fk_credit_type, t.code as credit_code, t.label as credit_label,";
+		$sql .= " SUM(CASE WHEN m.amount > 0 THEN m.amount ELSE 0 END) as budget_hours,";
+		$sql .= " SUM(CASE WHEN m.amount < 0 THEN ABS(m.amount) ELSE 0 END) as real_hours";
+		$sql .= " FROM ".MAIN_DB_PREFIX."credits_movements as m";
+		$sql .= " INNER JOIN ".MAIN_DB_PREFIX."societe as s ON s.rowid = m.fk_soc";
+		$sql .= " INNER JOIN ".MAIN_DB_PREFIX."credits_types as t ON t.rowid = m.fk_credit_type";
+		$sql .= " WHERE m.entity IN (".getEntity('credits_movement').")";
+		$sql .= " AND s.entity IN (".getEntity('societe').")";
+		$sql .= " AND t.entity IN (".getEntity('credits_type').")";
+		$sql .= " AND m.date_movement >= '".$this->db->idate($start)."'";
+		$sql .= " AND m.date_movement <= '".$this->db->idate($end)."'";
+		$sql .= " GROUP BY m.fk_soc, s.nom, m.fk_credit_type, t.code, t.label";
+		$sql .= " ORDER BY s.nom ASC, t.code ASC";
+
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			$this->error = $this->db->lasterror();
+			return $rows;
+		}
+
+		while ($obj = $this->db->fetch_object($resql)) {
+			$budget = (float) $obj->budget_hours;
+			$real = (float) $obj->real_hours;
+			$diff = $budget - $real;
+			$usage = $budget > 0 ? (($real / $budget) * 100) : 0;
+
+			$rows[] = array(
+				'fk_soc' => (int) $obj->fk_soc,
+				'socname' => $obj->socname,
+				'fk_credit_type' => (int) $obj->fk_credit_type,
+				'credit_code' => $obj->credit_code,
+				'credit_label' => $obj->credit_label,
+				'budget_hours' => $budget,
+				'real_hours' => $real,
+				'difference_hours' => $diff,
+				'usage_percent' => $usage,
+			);
+		}
+		$this->db->free($resql);
+
+		return $rows;
+	}
+}
