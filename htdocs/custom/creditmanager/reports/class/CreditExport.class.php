@@ -63,16 +63,13 @@ class CreditExport
 	 */
 	public function exportPDF($filename, $title, $headers, $rows)
 	{
-		if (!class_exists('TCPDF')) {
-			require_once DOL_DOCUMENT_ROOT.'/core/lib/pdf.lib.php';
-		}
+		require_once DOL_DOCUMENT_ROOT.'/core/lib/pdf.lib.php';
 
-		if (!class_exists('TCPDF')) {
+		$pdf = pdf_getInstance();
+		if (!is_object($pdf)) {
 			setEventMessages('TCPDF not available for PDF export.', null, 'errors');
 			return;
 		}
-
-		$pdf = pdf_getInstance();
 		$pdf->SetCreator('Dolibarr CreditManager');
 		$pdf->SetAuthor('CreditManager');
 		$pdf->SetTitle($title);

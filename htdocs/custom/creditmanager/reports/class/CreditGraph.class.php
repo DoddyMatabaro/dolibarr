@@ -75,8 +75,25 @@ class CreditGraph
 	 * @param array<int,array<string,mixed>> $rows
 	 * @return array<string,mixed>
 	 */
-	public function buildForecastChart($rows)
+	public function buildForecastChart($rows, $sortByMonths = true)
 	{
+		if ($sortByMonths) {
+			usort($rows, function ($a, $b) {
+				$ma = $a['months_remaining'];
+				$mb = $b['months_remaining'];
+				if ($ma === null && $mb === null) {
+					return 0;
+				}
+				if ($ma === null) {
+					return 1;
+				}
+				if ($mb === null) {
+					return -1;
+				}
+				return $ma <=> $mb;
+			});
+		}
+
 		$labels = array();
 		$data = array();
 		$colors = array();
@@ -105,6 +122,44 @@ class CreditGraph
 				'responsive' => true,
 				'plugins' => array('legend' => array('display' => false)),
 				'scales' => array('x' => array('beginAtZero' => true)),
+			),
+		);
+	}
+
+	/**
+	 * Distribution of forecast rows by status category.
+	 *
+	 * @param array<int,array<string,mixed>> $rows
+	 * @return array<string,mixed>
+	 */
+	public function buildForecastDistributionChart($rows)
+	{
+		$counts = array('safe' => 0, 'warning' => 0, 'critical' => 0);
+		foreach ($rows as $row) {
+			$status = $row['status'] ?? 'safe';
+			if (isset($counts[$status])) {
+				$counts[$status]++;
+			}
+		}
+
+		return array(
+			'type' => 'doughnut',
+			'data' => array(
+				'labels' => array('Safe (>3 months)', 'Warning (1-3 months)', 'Critical (<1 month)'),
+				'datasets' => array(
+					array(
+						'data' => array($counts['safe'], $counts['warning'], $counts['critical']),
+						'backgroundColor' => array(
+							'rgba(40,167,69,0.8)',
+							'rgba(255,193,7,0.8)',
+							'rgba(220,53,69,0.8)',
+						),
+					),
+				),
+			),
+			'options' => array(
+				'responsive' => true,
+				'plugins' => array('legend' => array('position' => 'bottom')),
 			),
 		);
 	}
