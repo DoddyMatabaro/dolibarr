@@ -123,28 +123,36 @@ class CreditReport extends CommonObject
 	 *
 	 * @param int|array $fk_soc
 	 * @param int|array $fk_credit_type
+	 * @param array     $filters period_months, fk_project, client_status, alert_threshold, months_min, months_max
 	 * @return array<int,array<string,mixed>>
 	 */
-	public function calculateForecast($fk_soc = 0, $fk_credit_type = 0)
+	public function calculateForecast($fk_soc = 0, $fk_credit_type = 0, $filters = array())
 	{
 		$rows = array();
 		$entityBalance = getEntity('credits_balance');
 		$entitySoc = getEntity('societe');
 		$entityType = getEntity('credits_type');
-		$threeMonthsAgo = dol_time_plus_duree(dol_now(), -3, 'm');
+		$entityProject = getEntity('project');
 
-		$sql = "SELECT b.fk_soc, s.nom as socname, b.fk_credit_type, t.code as credit_code, t.label as credit_label,";
+		$periodMonths = (int) ($filters['period_months'] ?? 3);
+		if (!in_array($periodMonths, array(3, 6, 12), true)) {
+			$periodMonths = 3;
+		}
+		$periodStart = dol_time_plus_duree(dol_now(), -$periodMonths, 'm');
+
+		$sql = "SELECT b.fk_soc, s.nom as socname, s.status as soc_status, s.email as soc_email,";
+		$sql .= " b.fk_credit_type, t.code as credit_code, t.label as credit_label,";
 		$sql .= " b.balance as current_balance,";
 		$sql .= " COALESCE(cons.avg_monthly_consumption, 0) as avg_monthly_consumption";
 		$sql .= " FROM ".MAIN_DB_PREFIX."credits_balance as b";
 		$sql .= " INNER JOIN ".MAIN_DB_PREFIX."societe as s ON s.rowid = b.fk_soc";
 		$sql .= " INNER JOIN ".MAIN_DB_PREFIX."credits_types as t ON t.rowid = b.fk_credit_type";
 		$sql .= " LEFT JOIN (";
-		$sql .= " SELECT m.fk_soc, m.fk_credit_type, SUM(ABS(m.amount)) / 3 as avg_monthly_consumption";
+		$sql .= " SELECT m.fk_soc, m.fk_credit_type, SUM(ABS(m.amount)) / ".$periodMonths." as avg_monthly_consumption";
 		$sql .= " FROM ".MAIN_DB_PREFIX."credits_movements as m";
 		$sql .= " WHERE m.entity IN (".getEntity('credits_movement').")";
 		$sql .= " AND m.amount < 0";
-		$sql .= " AND m.date_movement >= '".$this->db->idate($threeMonthsAgo)."'";
+		$sql .= " AND m.date_movement >= '".$this->db->idate($periodStart)."'";
 		$sql .= " GROUP BY m.fk_soc, m.fk_credit_type";
 		$sql .= " ) as cons ON cons.fk_soc = b.fk_soc AND cons.fk_credit_type = b.fk_credit_type";
 		$sql .= " WHERE b.entity IN (".$entityBalance.")";
@@ -160,6 +168,20 @@ class CreditReport extends CommonObject
 		if ($typeIn !== '') {
 			$sql .= " AND b.fk_credit_type IN (".$typeIn.")";
 		}
+
+		$projectIn = $this->sqlInList($filters['fk_project'] ?? 0);
+		if ($projectIn !== '') {
+			$sql .= " AND b.fk_soc IN (";
+			$sql .= " SELECT DISTINCT pr.fk_soc FROM ".MAIN_DB_PREFIX."projet as pr";
+			$sql .= " WHERE pr.rowid IN (".$projectIn.")";
+			$sql .= " AND pr.entity IN (".$entityProject.")";
+			$sql .= " )";
+		}
+
+		if (isset($filters['client_status']) && $filters['client_status'] !== '' && is_numeric($filters['client_status'])) {
+			$sql .= " AND s.status = ".((int) $filters['client_status']);
+		}
+
 		$sql .= " ORDER BY s.nom ASC, t.code ASC";
 
 		$resql = $this->db->query($sql);
@@ -168,21 +190,35 @@ class CreditReport extends CommonObject
 			return $rows;
 		}
 
+		$alertThreshold = $filters['alert_threshold'] ?? '';
+		$monthsMin = isset($filters['months_min']) && $filters['months_min'] !== '' && is_numeric($filters['months_min']) ? (float) $filters['months_min'] : null;
+		$monthsMax = isset($filters['months_max']) && $filters['months_max'] !== '' && is_numeric($filters['months_max']) ? (float) $filters['months_max'] : null;
+
 		while ($obj = $this->db->fetch_object($resql)) {
 			$avg = (float) $obj->avg_monthly_consumption;
 			$balance = (float) $obj->current_balance;
 			$months = $avg > 0 ? ($balance / $avg) : null;
 
-			$status = 'safe';
-			if ($months !== null && $months < 1) {
-				$status = 'critical';
-			} elseif ($months !== null && $months < 3) {
-				$status = 'warning';
+			$status = $this->forecastStatusFromMonths($months);
+
+			if ($alertThreshold === 'critical' && $status !== 'critical') {
+				continue;
+			}
+			if ($alertThreshold === 'warning' && !in_array($status, array('warning', 'critical'), true)) {
+				continue;
+			}
+			if ($monthsMin !== null && ($months === null || $months < $monthsMin)) {
+				continue;
+			}
+			if ($monthsMax !== null && ($months === null || $months > $monthsMax)) {
+				continue;
 			}
 
 			$rows[] = array(
 				'fk_soc' => (int) $obj->fk_soc,
 				'socname' => $obj->socname,
+				'soc_status' => (int) $obj->soc_status,
+				'soc_email' => $obj->soc_email,
 				'fk_credit_type' => (int) $obj->fk_credit_type,
 				'credit_code' => $obj->credit_code,
 				'credit_label' => $obj->credit_label,
@@ -195,6 +231,21 @@ class CreditReport extends CommonObject
 		$this->db->free($resql);
 
 		return $rows;
+	}
+
+	/**
+	 * @param float|null $months
+	 * @return string safe|warning|critical
+	 */
+	private function forecastStatusFromMonths($months)
+	{
+		if ($months !== null && $months < 1) {
+			return 'critical';
+		}
+		if ($months !== null && $months < 3) {
+			return 'warning';
+		}
+		return 'safe';
 	}
 
 	/**
