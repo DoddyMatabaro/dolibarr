@@ -275,3 +275,27 @@ CreditReportForecastEmailBody=Bonjour %s,<br><br>Votre solde de credit necessite
 CreditReportForecastEmailResult=%s email(s) envoye(s), %s erreur(s).
 CreditReportForecastGenerateReport=Generer rapport automatique
 CreditReportForecastGenerated=Rapport enregistre : %s
+
+# Rapport budget vs reel
+CreditReportBudgetVsRealTitle=Budget vs Reel
+CreditReportBudgetVsRealSubtitle=Compare les credits attribues (budget) a la consommation reelle.
+CreditReportBudgetYear=Annee
+CreditReportBudgetYearCurrent=Annee en cours
+CreditReportBudgetYearPrevious=Annee precedente
+CreditReportBudgetYearCustom=Annee personnalisee
+CreditReportVarianceThreshold=Seuil variance (% min / max)
+CreditReportBudgetUsageStatus=Statut utilisation
+CreditReportBudgetStatusOk=OK (<75%)
+CreditReportBudgetStatusWarning=Warning (75-90%)
+CreditReportBudgetStatusOver=Over (>90%)
+CreditReportConfigurableColumns=Colonnes configurables
+CreditReportBudgetHours=Budget
+CreditReportRealHours=Reel
+CreditReportDifference=Difference
+CreditReportUsagePercent=% utilise
+CreditReportVariance=Variance
+CreditReportVarianceChart=Tendance variance
+CreditReportDrillDown=Detail mensuel
+CreditReportMonthlyDetail=Detail mensuel
+CreditReportBudgetGenerateReport=Generer rapport automatique
+CreditReportBudgetGenerated=Rapport enregistre : %s

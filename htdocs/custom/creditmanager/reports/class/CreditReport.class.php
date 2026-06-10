@@ -251,14 +251,16 @@ class CreditReport extends CommonObject
 	/**
 	 * Compare yearly budget (attributions) versus real usage (debits).
 	 *
-	 * @param int $year
+	 * @param int   $year
+	 * @param array $filters fk_soc, fk_credit_type, fk_project, variance_min, variance_max, usage_status
 	 * @return array<int,array<string,mixed>>
 	 */
-	public function compareBudgetVsReal($year)
+	public function compareBudgetVsReal($year, $filters = array())
 	{
 		$rows = array();
 		$start = dol_mktime(0, 0, 0, 1, 1, (int) $year);
 		$end = dol_mktime(23, 59, 59, 12, 31, (int) $year);
+		$entityProject = getEntity('project');
 
 		$sql = "SELECT m.fk_soc, s.nom as socname, m.fk_credit_type, t.code as credit_code, t.label as credit_label,";
 		$sql .= " SUM(CASE WHEN m.amount > 0 THEN m.amount ELSE 0 END) as budget_hours,";
@@ -266,11 +268,28 @@ class CreditReport extends CommonObject
 		$sql .= " FROM ".MAIN_DB_PREFIX."credits_movements as m";
 		$sql .= " INNER JOIN ".MAIN_DB_PREFIX."societe as s ON s.rowid = m.fk_soc";
 		$sql .= " INNER JOIN ".MAIN_DB_PREFIX."credits_types as t ON t.rowid = m.fk_credit_type";
+		$sql .= " LEFT JOIN ".MAIN_DB_PREFIX."element_time as et ON et.rowid = m.fk_element_time";
+		$sql .= " LEFT JOIN ".MAIN_DB_PREFIX."projet_task as tsk ON tsk.rowid = et.fk_element AND et.elementtype = 'task'";
+		$sql .= " LEFT JOIN ".MAIN_DB_PREFIX."projet as pr ON pr.rowid = tsk.fk_projet AND pr.entity IN (".$entityProject.")";
 		$sql .= " WHERE m.entity IN (".getEntity('credits_movement').")";
 		$sql .= " AND s.entity IN (".getEntity('societe').")";
 		$sql .= " AND t.entity IN (".getEntity('credits_type').")";
 		$sql .= " AND m.date_movement >= '".$this->db->idate($start)."'";
 		$sql .= " AND m.date_movement <= '".$this->db->idate($end)."'";
+
+		$socIn = $this->sqlInList($filters['fk_soc'] ?? 0);
+		if ($socIn !== '') {
+			$sql .= " AND m.fk_soc IN (".$socIn.")";
+		}
+		$typeIn = $this->sqlInList($filters['fk_credit_type'] ?? 0);
+		if ($typeIn !== '') {
+			$sql .= " AND m.fk_credit_type IN (".$typeIn.")";
+		}
+		$projectIn = $this->sqlInList($filters['fk_project'] ?? 0);
+		if ($projectIn !== '') {
+			$sql .= " AND pr.rowid IN (".$projectIn.")";
+		}
+
 		$sql .= " GROUP BY m.fk_soc, s.nom, m.fk_credit_type, t.code, t.label";
 		$sql .= " ORDER BY s.nom ASC, t.code ASC";
 
@@ -280,11 +299,32 @@ class CreditReport extends CommonObject
 			return $rows;
 		}
 
+		$varianceMin = isset($filters['variance_min']) && $filters['variance_min'] !== '' && is_numeric($filters['variance_min']) ? (float) $filters['variance_min'] : null;
+		$varianceMax = isset($filters['variance_max']) && $filters['variance_max'] !== '' && is_numeric($filters['variance_max']) ? (float) $filters['variance_max'] : null;
+		$usageStatus = $filters['usage_status'] ?? '';
+
 		while ($obj = $this->db->fetch_object($resql)) {
 			$budget = (float) $obj->budget_hours;
 			$real = (float) $obj->real_hours;
 			$diff = $budget - $real;
-			$usage = $budget > 0 ? (($real / $budget) * 100) : 0;
+			$usage = $budget > 0 ? (($real / $budget) * 100) : ($real > 0 ? 100 : 0);
+			$status = $this->budgetUsageStatus($usage);
+
+			if ($varianceMin !== null && $usage < $varianceMin) {
+				continue;
+			}
+			if ($varianceMax !== null && $usage > $varianceMax) {
+				continue;
+			}
+			if ($usageStatus === 'ok' && $status !== 'ok') {
+				continue;
+			}
+			if ($usageStatus === 'warning' && $status !== 'warning') {
+				continue;
+			}
+			if ($usageStatus === 'over' && $status !== 'over') {
+				continue;
+			}
 
 			$rows[] = array(
 				'fk_soc' => (int) $obj->fk_soc,
@@ -296,10 +336,77 @@ class CreditReport extends CommonObject
 				'real_hours' => $real,
 				'difference_hours' => $diff,
 				'usage_percent' => $usage,
+				'variance_percent' => $usage,
+				'status' => $status,
 			);
 		}
 		$this->db->free($resql);
 
 		return $rows;
+	}
+
+	/**
+	 * Monthly drill-down for one client / credit type.
+	 *
+	 * @param int $year
+	 * @param int $fk_soc
+	 * @param int $fk_credit_type
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function getBudgetVsRealMonthlyDetail($year, $fk_soc, $fk_credit_type)
+	{
+		$rows = array();
+		$start = dol_mktime(0, 0, 0, 1, 1, (int) $year);
+		$end = dol_mktime(23, 59, 59, 12, 31, (int) $year);
+
+		$sql = "SELECT DATE_FORMAT(m.date_movement, '%Y-%m') as month_key,";
+		$sql .= " SUM(CASE WHEN m.amount > 0 THEN m.amount ELSE 0 END) as budget_hours,";
+		$sql .= " SUM(CASE WHEN m.amount < 0 THEN ABS(m.amount) ELSE 0 END) as real_hours";
+		$sql .= " FROM ".MAIN_DB_PREFIX."credits_movements as m";
+		$sql .= " WHERE m.entity IN (".getEntity('credits_movement').")";
+		$sql .= " AND m.fk_soc = ".((int) $fk_soc);
+		$sql .= " AND m.fk_credit_type = ".((int) $fk_credit_type);
+		$sql .= " AND m.date_movement >= '".$this->db->idate($start)."'";
+		$sql .= " AND m.date_movement <= '".$this->db->idate($end)."'";
+		$sql .= " GROUP BY month_key";
+		$sql .= " ORDER BY month_key ASC";
+
+		$resql = $this->db->query($sql);
+		if (!$resql) {
+			$this->error = $this->db->lasterror();
+			return $rows;
+		}
+
+		while ($obj = $this->db->fetch_object($resql)) {
+			$budget = (float) $obj->budget_hours;
+			$real = (float) $obj->real_hours;
+			$usage = $budget > 0 ? (($real / $budget) * 100) : ($real > 0 ? 100 : 0);
+			$rows[] = array(
+				'month_key' => $obj->month_key,
+				'budget_hours' => $budget,
+				'real_hours' => $real,
+				'difference_hours' => $budget - $real,
+				'usage_percent' => $usage,
+				'status' => $this->budgetUsageStatus($usage),
+			);
+		}
+		$this->db->free($resql);
+
+		return $rows;
+	}
+
+	/**
+	 * @param float $usagePercent
+	 * @return string ok|warning|over
+	 */
+	private function budgetUsageStatus($usagePercent)
+	{
+		if ($usagePercent >= 90) {
+			return 'over';
+		}
+		if ($usagePercent >= 75) {
+			return 'warning';
+		}
+		return 'ok';
 	}
 }
