@@ -216,6 +216,56 @@ class CreditGraph
 	}
 
 	/**
+	 * Variance line chart with 75% / 90% thresholds.
+	 *
+	 * @param array<int,array<string,mixed>> $rows
+	 * @return array<string,mixed>
+	 */
+	public function buildVarianceChart($rows)
+	{
+		$labels = array();
+		$data = array();
+
+		foreach ($rows as $row) {
+			$labels[] = $row['socname'].' - '.$row['credit_code'];
+			$data[] = round((float) $row['usage_percent'], 2);
+		}
+
+		return array(
+			'type' => 'line',
+			'data' => array(
+				'labels' => $labels,
+				'datasets' => array(
+					array(
+						'label' => '% used',
+						'data' => $data,
+						'borderColor' => 'rgba(54,162,235,1)',
+						'backgroundColor' => 'rgba(54,162,235,0.2)',
+						'tension' => 0.2,
+						'fill' => true,
+					),
+				),
+			),
+			'options' => array(
+				'responsive' => true,
+				'maintainAspectRatio' => false,
+				'plugins' => array(
+					'legend' => array('display' => true),
+					'annotation' => array(),
+				),
+				'scales' => array(
+					'y' => array(
+						'beginAtZero' => true,
+						'max' => 120,
+						'title' => array('display' => true, 'text' => '%'),
+					),
+				),
+			),
+			'thresholds' => array(75, 90),
+		);
+	}
+
+	/**
 	 * @param int $index
 	 * @return array{0:int,1:int,2:int}
 	 */

@@ -275,3 +275,27 @@ CreditReportForecastEmailBody=Dear %s,<br><br>Your credit balance requires atten
 CreditReportForecastEmailResult=%s email(s) sent, %s error(s).
 CreditReportForecastGenerateReport=Generate automatic report
 CreditReportForecastGenerated=Report saved: %s
+
+# Budget vs real report
+CreditReportBudgetVsRealTitle=Budget vs Real
+CreditReportBudgetVsRealSubtitle=Compare attributed credits (budget) against actual consumption (real).
+CreditReportBudgetYear=Year
+CreditReportBudgetYearCurrent=Current year
+CreditReportBudgetYearPrevious=Previous year
+CreditReportBudgetYearCustom=Custom year
+CreditReportVarianceThreshold=Variance threshold (% min / max)
+CreditReportBudgetUsageStatus=Usage status
+CreditReportBudgetStatusOk=OK (<75%)
+CreditReportBudgetStatusWarning=Warning (75-90%)
+CreditReportBudgetStatusOver=Over (>90%)
+CreditReportConfigurableColumns=Configurable columns
+CreditReportBudgetHours=Budget
+CreditReportRealHours=Real
+CreditReportDifference=Difference
+CreditReportUsagePercent=% used
+CreditReportVariance=Variance
+CreditReportVarianceChart=Variance trend
+CreditReportDrillDown=Monthly detail
+CreditReportMonthlyDetail=Monthly detail
+CreditReportBudgetGenerateReport=Generate automatic report
+CreditReportBudgetGenerated=Report saved: %s
