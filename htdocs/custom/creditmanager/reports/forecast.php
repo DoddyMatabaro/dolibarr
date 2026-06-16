@@ -37,9 +37,11 @@ require_once DOL_DOCUMENT_ROOT.'/custom/creditmanager/reports/class/CreditExport
 creditmanagerEnsureLeftMenuFlat($db);
 $langs->loadLangs(array('creditmanager@creditmanager', 'companies', 'projects', 'other'));
 
-if (!creditmanagerCanReadModule($user)) {
+if (!creditmanagerCanAccessReports($user)) {
 	accessforbidden();
 }
+
+$reportScope = creditmanagerGetReportScope($db, $user);
 
 $form = new Form($db);
 $report = new CreditReport($db);
@@ -82,6 +84,8 @@ $search_socids = $cleanIds($search_socids);
 $search_typeids = $cleanIds($search_typeids);
 $search_projectids = $cleanIds($search_projectids);
 
+creditmanagerApplyReportScopeToFilters($reportScope, $search_socids, $search_projectids, $db);
+
 $filters = array(
 	'period_months' => $period_months,
 	'fk_project' => $search_projectids,
@@ -89,6 +93,7 @@ $filters = array(
 	'alert_threshold' => $alert_threshold,
 	'months_min' => $months_min,
 	'months_max' => $months_max,
+	'scope' => $reportScope,
 );
 
 $forecastRows = $report->calculateForecast($search_socids, $search_typeids, $filters);
@@ -239,7 +244,12 @@ print '<tr class="liste_titre"><th colspan="4">'.$langs->trans('CreditReportFilt
 
 print '<tr class="oddeven">';
 print '<td><label>'.$langs->trans('CreditReportClients').'</label><br>';
-$sqlClients = "SELECT rowid, nom FROM ".MAIN_DB_PREFIX."societe WHERE entity IN (".$entitySoc.") AND client IN (1,2,3) ORDER BY nom";
+$allowedSocIds = creditmanagerGetReportScopeSocIdsForSelect($db, $reportScope, $entitySoc);
+$sqlClients = "SELECT rowid, nom FROM ".MAIN_DB_PREFIX."societe WHERE entity IN (".$entitySoc.") AND client IN (1,2,3)";
+if ($reportScope['type'] !== 'all') {
+	$sqlClients .= !empty($allowedSocIds) ? " AND rowid IN (".implode(',', $allowedSocIds).")" : " AND 1=0";
+}
+$sqlClients .= " ORDER BY nom";
 $resClients = $db->query($sqlClients);
 print '<select class="flat minwidth250" name="search_socids[]" multiple>';
 if ($resClients) {
@@ -263,7 +273,12 @@ if ($resTypes) {
 }
 print '</select></td>';
 
-$sqlProjects = "SELECT rowid, ref, title FROM ".MAIN_DB_PREFIX."projet WHERE entity IN (".$entityProject.") ORDER BY ref";
+$allowedProjectIds = creditmanagerGetReportScopeProjectIdsForSelect($db, $reportScope, $entityProject);
+$sqlProjects = "SELECT rowid, ref, title FROM ".MAIN_DB_PREFIX."projet WHERE entity IN (".$entityProject.")";
+if ($reportScope['type'] !== 'all') {
+	$sqlProjects .= !empty($allowedProjectIds) ? " AND rowid IN (".implode(',', $allowedProjectIds).")" : " AND 1=0";
+}
+$sqlProjects .= " ORDER BY ref";
 $resProjects = $db->query($sqlProjects);
 print '<td><label>'.$langs->trans('CreditReportProjects').'</label><br><select class="flat minwidth250" name="search_projectids[]" multiple>';
 if ($resProjects) {

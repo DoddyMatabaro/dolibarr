@@ -210,6 +210,9 @@ CreditHistory=Historique des crédits ?
 
 # Rapport de consommation (avance)
 CreditReportConsumptionTitle=Rapport de consommation
+CreditReportConsumptionMenu=Consommation
+CreditReportForecastMenu=Prévision
+CreditReportBudgetMenu=Budget vs réel
 CreditReportConsumptionSubtitle=Rapport avance avec filtres, graphiques interactifs et exports.
 CreditReportActivePeriod=Periode active
 CreditReportFilters=Filtres

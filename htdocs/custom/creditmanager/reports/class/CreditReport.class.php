@@ -150,9 +150,16 @@ class CreditReport extends CommonObject
 		$sql .= " LEFT JOIN (";
 		$sql .= " SELECT m.fk_soc, m.fk_credit_type, SUM(ABS(m.amount)) / ".$periodMonths." as avg_monthly_consumption";
 		$sql .= " FROM ".MAIN_DB_PREFIX."credits_movements as m";
+		$sql .= " LEFT JOIN ".MAIN_DB_PREFIX."element_time as et ON et.rowid = m.fk_element_time";
+		$sql .= " LEFT JOIN ".MAIN_DB_PREFIX."projet_task as tsk ON tsk.rowid = et.fk_element AND et.elementtype = 'task'";
+		$sql .= " LEFT JOIN ".MAIN_DB_PREFIX."projet as pr ON pr.rowid = tsk.fk_projet AND pr.entity IN (".$entityProject.")";
 		$sql .= " WHERE m.entity IN (".getEntity('credits_movement').")";
 		$sql .= " AND m.amount < 0";
 		$sql .= " AND m.date_movement >= '".$this->db->idate($periodStart)."'";
+		if (!empty($filters['scope'])) {
+			dol_include_once('/custom/creditmanager/lib/creditmanager.lib.php');
+			$sql .= creditmanagerReportScopeWhereSql($filters['scope'], 'm', 'pr');
+		}
 		$sql .= " GROUP BY m.fk_soc, m.fk_credit_type";
 		$sql .= " ) as cons ON cons.fk_soc = b.fk_soc AND cons.fk_credit_type = b.fk_credit_type";
 		$sql .= " WHERE b.entity IN (".$entityBalance.")";
@@ -180,6 +187,11 @@ class CreditReport extends CommonObject
 
 		if (isset($filters['client_status']) && $filters['client_status'] !== '' && is_numeric($filters['client_status'])) {
 			$sql .= " AND s.status = ".((int) $filters['client_status']);
+		}
+
+		if (!empty($filters['scope'])) {
+			dol_include_once('/custom/creditmanager/lib/creditmanager.lib.php');
+			$sql .= creditmanagerReportScopeBalanceWhereSql($filters['scope'], 'b');
 		}
 
 		$sql .= " ORDER BY s.nom ASC, t.code ASC";
@@ -287,7 +299,12 @@ class CreditReport extends CommonObject
 		}
 		$projectIn = $this->sqlInList($filters['fk_project'] ?? 0);
 		if ($projectIn !== '') {
-			$sql .= " AND pr.rowid IN (".$projectIn.")";
+			dol_include_once('/custom/creditmanager/lib/creditmanager.lib.php');
+			$projectIds = array_filter(array_map('intval', explode(',', $projectIn)));
+			$sql .= " AND ".creditmanagerReportProjectIdsWhereCondition($projectIds, 'm', 'pr');
+		} elseif (!empty($filters['scope'])) {
+			dol_include_once('/custom/creditmanager/lib/creditmanager.lib.php');
+			$sql .= creditmanagerReportScopeWhereSql($filters['scope'], 'm', 'pr');
 		}
 
 		$sql .= " GROUP BY m.fk_soc, s.nom, m.fk_credit_type, t.code, t.label";
