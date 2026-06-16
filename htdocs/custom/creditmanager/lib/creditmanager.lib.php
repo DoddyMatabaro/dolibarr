@@ -175,3 +175,388 @@ function creditmanagerCanReadClientPortal($user)
 {
 	return !empty($user->rights->creditmanager->client_portal_read) || !empty($user->rights->creditmanager->creditmanager_client);
 }
+
+/**
+ * User group names for current user.
+ *
+ * @param DoliDB $db
+ * @param User $user
+ * @return array<int,string>
+ */
+function creditmanagerGetUserGroupNames(DoliDB $db, $user)
+{
+	require_once DOL_DOCUMENT_ROOT.'/user/class/usergroup.class.php';
+
+	$names = array();
+	$usergroup = new UserGroup($db);
+	$groupslist = $usergroup->listGroupsForUser($user->id, false);
+	if (is_array($groupslist)) {
+		foreach ($groupslist as $group) {
+			if (!empty($group->nom)) {
+				$names[] = $group->nom;
+			}
+		}
+	}
+	return $names;
+}
+
+/**
+ * Staff-only users have read but no elevated creditmanager permissions.
+ *
+ * @param User $user
+ * @return bool
+ */
+function creditmanagerIsStaffOnlyUser($user)
+{
+	if (!creditmanagerCanReadModule($user)) {
+		return false;
+	}
+	if (creditmanagerCanManageAdmin($user)) {
+		return false;
+	}
+	if (creditmanagerCanManageAttributions($user)) {
+		return false;
+	}
+	if (creditmanagerCanManageCreditTypes($user)) {
+		return false;
+	}
+	if (creditmanagerCanManualDebit($user)) {
+		return false;
+	}
+	if (!empty($user->rights->creditmanager->timesheet_approve)) {
+		return false;
+	}
+	if (creditmanagerCanExport($user)) {
+		return false;
+	}
+	if (creditmanagerIsClientPortalUser($user)) {
+		return false;
+	}
+	return true;
+}
+
+/**
+ * External client portal user linked to a thirdparty.
+ *
+ * @param User $user
+ * @return bool
+ */
+function creditmanagerIsClientPortalUser($user)
+{
+	return !empty($user->socid) && creditmanagerCanReadClientPortal($user);
+}
+
+/**
+ * Access to advanced report pages (consumption, forecast, budget vs real).
+ * Staff is excluded.
+ *
+ * @param User $user
+ * @return bool
+ */
+function creditmanagerCanAccessReports($user)
+{
+	if (creditmanagerIsStaffOnlyUser($user)) {
+		return false;
+	}
+	if (creditmanagerCanManageAdmin($user)) {
+		return true;
+	}
+	if (creditmanagerCanManageAttributions($user) || creditmanagerCanExport($user)) {
+		return true;
+	}
+	if (creditmanagerCanManualDebit($user) || !empty($user->rights->creditmanager->timesheet_approve)) {
+		return true;
+	}
+	if (creditmanagerIsClientPortalUser($user)) {
+		return true;
+	}
+	return false;
+}
+
+/**
+ * Report data scope: all (admin/finance), pm (projects), client (own soc).
+ *
+ * @param DoliDB $db
+ * @param User $user
+ * @return array{type:string,fk_soc?:int,project_ids?:array<int,int>}
+ */
+function creditmanagerGetReportScope(DoliDB $db, $user)
+{
+	if (creditmanagerCanManageAdmin($user) || creditmanagerCanManageAttributions($user) || creditmanagerCanExport($user)) {
+		return array('type' => 'all');
+	}
+	if (creditmanagerIsClientPortalUser($user)) {
+		return array('type' => 'client', 'fk_soc' => (int) $user->socid);
+	}
+	if (creditmanagerCanManualDebit($user) || !empty($user->rights->creditmanager->timesheet_approve)) {
+		require_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
+		$projectstatic = new Project($db);
+		$list = $projectstatic->getProjectsAuthorizedForUser($user, 0, 1);
+		$ids = array();
+		if ($list !== '' && $list !== '0') {
+			foreach (explode(',', $list) as $id) {
+				$i = (int) $id;
+				if ($i > 0) {
+					$ids[] = $i;
+				}
+			}
+		}
+		return array('type' => 'pm', 'project_ids' => $ids);
+	}
+	return array('type' => 'none');
+}
+
+/**
+ * SQL fragment restricting movements to report scope.
+ *
+ * @param array $scope
+ * @param string $movementAlias
+ * @param string $projectAlias
+ * @return string
+ */
+function creditmanagerReportScopeWhereSql($scope, $movementAlias = 'm', $projectAlias = 'pr')
+{
+	if (empty($scope['type']) || $scope['type'] === 'all') {
+		return '';
+	}
+	if ($scope['type'] === 'client' && !empty($scope['fk_soc'])) {
+		return ' AND '.$movementAlias.'.fk_soc = '.((int) $scope['fk_soc']);
+	}
+	if ($scope['type'] === 'pm') {
+		$projectIds = !empty($scope['project_ids']) ? $scope['project_ids'] : array();
+		if (empty($projectIds)) {
+			return ' AND 1 = 0';
+		}
+		$in = implode(',', array_map('intval', $projectIds));
+		$sql = ' AND (';
+		$sql .= $projectAlias.'.rowid IN ('.$in.')';
+		$sql .= ' OR '.$movementAlias.'.fk_soc IN (';
+		$sql .= ' SELECT DISTINCT pr_scope.fk_soc FROM '.MAIN_DB_PREFIX.'projet as pr_scope';
+		$sql .= ' WHERE pr_scope.rowid IN ('.$in.') AND pr_scope.fk_soc IS NOT NULL AND pr_scope.fk_soc > 0';
+		$sql .= ' )';
+		$sql .= ' )';
+		return $sql;
+	}
+	return ' AND 1 = 0';
+}
+
+/**
+ * SQL fragment for balance-based reports (forecast).
+ *
+ * @param array $scope
+ * @param string $balanceAlias
+ * @return string
+ */
+function creditmanagerReportScopeBalanceWhereSql($scope, $balanceAlias = 'b')
+{
+	if (empty($scope['type']) || $scope['type'] === 'all') {
+		return '';
+	}
+	if ($scope['type'] === 'client' && !empty($scope['fk_soc'])) {
+		return ' AND '.$balanceAlias.'.fk_soc = '.((int) $scope['fk_soc']);
+	}
+	if ($scope['type'] === 'pm') {
+		$projectIds = !empty($scope['project_ids']) ? $scope['project_ids'] : array();
+		if (empty($projectIds)) {
+			return ' AND 1 = 0';
+		}
+		$in = implode(',', array_map('intval', $projectIds));
+		return ' AND '.$balanceAlias.'.fk_soc IN (SELECT DISTINCT pr_scope.fk_soc FROM '.MAIN_DB_PREFIX.'projet as pr_scope WHERE pr_scope.rowid IN ('.$in.') AND pr_scope.fk_soc IS NOT NULL AND pr_scope.fk_soc > 0)';
+	}
+	return ' AND 1 = 0';
+}
+
+/**
+ * Apply scope to user-selected client/project filters.
+ *
+ * @param array        $scope
+ * @param array<int>   $search_socids
+ * @param array<int>   $search_projectids
+ * @param DoliDB|null  $db
+ * @return void
+ */
+function creditmanagerApplyReportScopeToFilters($scope, &$search_socids, &$search_projectids, DoliDB $db = null)
+{
+	if ($scope['type'] === 'client' && !empty($scope['fk_soc'])) {
+		$search_socids = array((int) $scope['fk_soc']);
+		if ($db) {
+			$res = $db->query('SELECT rowid FROM '.MAIN_DB_PREFIX.'projet WHERE fk_soc = '.((int) $scope['fk_soc']));
+			if ($res) {
+				$search_projectids = array();
+				while ($obj = $db->fetch_object($res)) {
+					$search_projectids[] = (int) $obj->rowid;
+				}
+				$db->free($res);
+			}
+		}
+		return;
+	}
+	if ($scope['type'] === 'pm' && !empty($scope['project_ids'])) {
+		$allowedProjects = $scope['project_ids'];
+		if (!empty($search_projectids)) {
+			$search_projectids = array_values(array_intersect($search_projectids, $allowedProjects));
+		} else {
+			$search_projectids = $allowedProjects;
+		}
+		if ($db && empty($search_socids)) {
+			$in = implode(',', array_map('intval', $allowedProjects));
+			$res = $db->query('SELECT DISTINCT fk_soc FROM '.MAIN_DB_PREFIX.'projet WHERE rowid IN ('.$in.') AND fk_soc IS NOT NULL AND fk_soc > 0');
+			if ($res) {
+				while ($obj = $db->fetch_object($res)) {
+					$search_socids[] = (int) $obj->fk_soc;
+				}
+				$db->free($res);
+				$search_socids = array_values(array_unique($search_socids));
+			}
+		} elseif (!empty($search_socids) && $db) {
+			$in = implode(',', array_map('intval', $allowedProjects));
+			$res = $db->query('SELECT DISTINCT fk_soc FROM '.MAIN_DB_PREFIX.'projet WHERE rowid IN ('.$in.') AND fk_soc IN ('.implode(',', array_map('intval', $search_socids)).')');
+			$allowedSoc = array();
+			if ($res) {
+				while ($obj = $db->fetch_object($res)) {
+					$allowedSoc[] = (int) $obj->fk_soc;
+				}
+				$db->free($res);
+			}
+			$search_socids = $allowedSoc;
+		}
+	}
+}
+
+/**
+ * Allowed project ids for filter dropdowns.
+ *
+ * @param DoliDB $db
+ * @param array  $scope
+ * @param string $entityProject
+ * @return array<int,int>
+ */
+function creditmanagerGetReportScopeProjectIdsForSelect(DoliDB $db, $scope, $entityProject)
+{
+	if ($scope['type'] === 'all') {
+		$ids = array();
+		$res = $db->query('SELECT rowid FROM '.MAIN_DB_PREFIX.'projet WHERE entity IN ('.$entityProject.') ORDER BY ref');
+		if ($res) {
+			while ($obj = $db->fetch_object($res)) {
+				$ids[] = (int) $obj->rowid;
+			}
+			$db->free($res);
+		}
+		return $ids;
+	}
+	if ($scope['type'] === 'pm') {
+		return !empty($scope['project_ids']) ? $scope['project_ids'] : array();
+	}
+	if ($scope['type'] === 'client' && !empty($scope['fk_soc'])) {
+		$ids = array();
+		$res = $db->query('SELECT rowid FROM '.MAIN_DB_PREFIX.'projet WHERE entity IN ('.$entityProject.') AND fk_soc = '.((int) $scope['fk_soc']).' ORDER BY ref');
+		if ($res) {
+			while ($obj = $db->fetch_object($res)) {
+				$ids[] = (int) $obj->rowid;
+			}
+			$db->free($res);
+		}
+		return $ids;
+	}
+	return array();
+}
+
+/**
+ * Allowed client ids for filter dropdowns.
+ *
+ * @param DoliDB $db
+ * @param array  $scope
+ * @param string $entitySoc
+ * @return array<int,int>
+ */
+function creditmanagerGetReportScopeSocIdsForSelect(DoliDB $db, $scope, $entitySoc)
+{
+	if ($scope['type'] === 'client' && !empty($scope['fk_soc'])) {
+		return array((int) $scope['fk_soc']);
+	}
+	if ($scope['type'] === 'pm' && !empty($scope['project_ids'])) {
+		$in = implode(',', array_map('intval', $scope['project_ids']));
+		$ids = array();
+		$res = $db->query('SELECT DISTINCT fk_soc FROM '.MAIN_DB_PREFIX.'projet WHERE rowid IN ('.$in.') AND fk_soc IS NOT NULL AND fk_soc > 0');
+		if ($res) {
+			while ($obj = $db->fetch_object($res)) {
+				$ids[] = (int) $obj->fk_soc;
+			}
+			$db->free($res);
+		}
+		return $ids;
+	}
+	$ids = array();
+	$res = $db->query('SELECT rowid FROM '.MAIN_DB_PREFIX.'societe WHERE entity IN ('.$entitySoc.') AND client IN (1,2,3) ORDER BY nom');
+	if ($res) {
+		while ($obj = $db->fetch_object($res)) {
+			$ids[] = (int) $obj->rowid;
+		}
+		$db->free($res);
+	}
+	return $ids;
+}
+
+/**
+ * Project filter including attributions without element_time link.
+ *
+ * @param array<int> $projectIds
+ * @param string     $movementAlias
+ * @param string     $projectAlias
+ * @return string
+ */
+function creditmanagerReportProjectIdsWhereCondition($projectIds, $movementAlias = 'm', $projectAlias = 'pr')
+{
+	if (empty($projectIds)) {
+		return '';
+	}
+	$in = implode(',', array_map('intval', $projectIds));
+	$sql = '('.$projectAlias.'.rowid IN ('.$in.')';
+	$sql .= ' OR '.$movementAlias.'.fk_soc IN (';
+	$sql .= ' SELECT DISTINCT pr_f.fk_soc FROM '.MAIN_DB_PREFIX.'projet as pr_f';
+	$sql .= ' WHERE pr_f.rowid IN ('.$in.') AND pr_f.fk_soc IS NOT NULL AND pr_f.fk_soc > 0';
+	$sql .= ' ))';
+	return $sql;
+}
+
+/**
+ * Check if user can access a client row in reports.
+ *
+ * @param array $scope
+ * @param int   $fk_soc
+ * @param DoliDB|null $db
+ * @return bool
+ */
+function creditmanagerReportCanAccessSoc($scope, $fk_soc, DoliDB $db = null)
+{
+	$fk_soc = (int) $fk_soc;
+	if ($fk_soc <= 0) {
+		return false;
+	}
+	if (empty($scope['type']) || $scope['type'] === 'all') {
+		return true;
+	}
+	if ($scope['type'] === 'client') {
+		return $fk_soc === (int) ($scope['fk_soc'] ?? 0);
+	}
+	if ($scope['type'] === 'pm' && $db && !empty($scope['project_ids'])) {
+		$in = implode(',', array_map('intval', $scope['project_ids']));
+		$res = $db->query('SELECT rowid FROM '.MAIN_DB_PREFIX.'projet WHERE rowid IN ('.$in.') AND fk_soc = '.$fk_soc.' LIMIT 1');
+		if ($res) {
+			$ok = ($db->num_rows($res) > 0);
+			$db->free($res);
+			return $ok;
+		}
+	}
+	return false;
+}
+
+/**
+ * Menu enabled expression for report pages.
+ *
+ * @return string
+ */
+function creditmanagerReportsMenuEnabledExpr()
+{
+	return 'isModEnabled("creditmanager") && ($user->hasRight("creditmanager","creditmanager_admin") || $user->hasRight("creditmanager","reports_export") || $user->hasRight("creditmanager","attribution_manage") || $user->hasRight("creditmanager","timesheet_approve") || $user->hasRight("creditmanager","timesheet_manual_debit") || $user->hasRight("creditmanager","client_portal_read") || $user->hasRight("creditmanager","creditmanager_client"))';
+}

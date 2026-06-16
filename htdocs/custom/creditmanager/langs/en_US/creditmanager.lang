@@ -210,6 +210,9 @@ Total=Total
 
 # Consumption report (advanced)
 CreditReportConsumptionTitle=Consumption report
+CreditReportConsumptionMenu=Consumption
+CreditReportForecastMenu=Forecast
+CreditReportBudgetMenu=Budget vs real
 CreditReportConsumptionSubtitle=Advanced report with filters, interactive charts and exports.
 CreditReportActivePeriod=Active period
 CreditReportFilters=Filters

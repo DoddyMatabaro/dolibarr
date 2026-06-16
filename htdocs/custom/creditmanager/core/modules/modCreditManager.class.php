@@ -219,6 +219,59 @@ class modCreditManager extends DolibarrModules
 			'user'     => 2,
 		);
 
+		$reportsMenuEnabled = 'isModEnabled("creditmanager") && ($user->hasRight("creditmanager","creditmanager_admin") || $user->hasRight("creditmanager","reports_export") || $user->hasRight("creditmanager","attribution_manage") || $user->hasRight("creditmanager","timesheet_approve") || $user->hasRight("creditmanager","timesheet_manual_debit") || $user->hasRight("creditmanager","client_portal_read") || $user->hasRight("creditmanager","creditmanager_client"))';
+
+		// Left menu - Consumption report
+		$this->menu[$r++] = array(
+			'fk_menu'  => 'fk_mainmenu=creditmanager',
+			'type'     => 'left',
+			'titre'    => 'CreditReportConsumptionMenu',
+			'prefix'   => 'fas fa-chart-bar fa-fw paddingright pictofixedwidth',
+			'mainmenu' => 'creditmanager',
+			'leftmenu' => 'creditmanager_report_consumption',
+			'url'      => '/custom/creditmanager/reports/consumption.php',
+			'langs'    => 'creditmanager@creditmanager',
+			'position' => 1021,
+			'enabled'  => $reportsMenuEnabled,
+			'perms'    => '1',
+			'target'   => '',
+			'user'     => 2,
+		);
+
+		// Left menu - Forecast report
+		$this->menu[$r++] = array(
+			'fk_menu'  => 'fk_mainmenu=creditmanager',
+			'type'     => 'left',
+			'titre'    => 'CreditReportForecastMenu',
+			'prefix'   => 'fas fa-chart-line fa-fw paddingright pictofixedwidth',
+			'mainmenu' => 'creditmanager',
+			'leftmenu' => 'creditmanager_report_forecast',
+			'url'      => '/custom/creditmanager/reports/forecast.php',
+			'langs'    => 'creditmanager@creditmanager',
+			'position' => 1022,
+			'enabled'  => $reportsMenuEnabled,
+			'perms'    => '1',
+			'target'   => '',
+			'user'     => 2,
+		);
+
+		// Left menu - Budget vs real report
+		$this->menu[$r++] = array(
+			'fk_menu'  => 'fk_mainmenu=creditmanager',
+			'type'     => 'left',
+			'titre'    => 'CreditReportBudgetMenu',
+			'prefix'   => 'fas fa-chart-pie fa-fw paddingright pictofixedwidth',
+			'mainmenu' => 'creditmanager',
+			'leftmenu' => 'creditmanager_report_budget',
+			'url'      => '/custom/creditmanager/reports/budget_vs_real.php',
+			'langs'    => 'creditmanager@creditmanager',
+			'position' => 1023,
+			'enabled'  => $reportsMenuEnabled,
+			'perms'    => '1',
+			'target'   => '',
+			'user'     => 2,
+		);
+
 		// Left menu - Manual timesheet debit (MVP)
 		$this->menu[$r++] = array(
 			'fk_menu'  => 'fk_mainmenu=creditmanager',
