@@ -241,7 +241,7 @@ $sqlTypes = 'SELECT rowid, code, label FROM '.MAIN_DB_PREFIX.'credits_types';
 $sqlTypes .= ' WHERE entity IN ('.$entityType.') AND active = 1 ORDER BY code';
 $resTypes = $db->query($sqlTypes);
 print '<select name="search_credit_type" class="flat maxwidth200">';
-print '<option value="0">'.$langs->trans('All').'</option>';
+print '<option value="0"></option>';
 if ($resTypes) {
 	while ($objT = $db->fetch_object($resTypes)) {
 		$sel = ($search_credit_type > 0 && (int) $objT->rowid === $search_credit_type) ? ' selected' : '';

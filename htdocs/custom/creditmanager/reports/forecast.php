@@ -292,7 +292,7 @@ print '</select></td>';
 
 print '<td><label>'.$langs->trans('CreditReportForecastAlertThreshold').'</label><br>';
 print '<select name="alert_threshold" class="flat maxwidth200">';
-print '<option value=""'.($alert_threshold === '' ? ' selected' : '').'>'.$langs->trans('All').'</option>';
+print '<option value=""'.($alert_threshold === '' ? ' selected' : '').'></option>';
 print '<option value="warning"'.($alert_threshold === 'warning' ? ' selected' : '').'>'.$langs->trans('CreditReportForecastStatusWarning').'</option>';
 print '<option value="critical"'.($alert_threshold === 'critical' ? ' selected' : '').'>'.$langs->trans('CreditReportForecastStatusCritical').'</option>';
 print '</select></td></tr>';
@@ -304,7 +304,7 @@ print '<input class="flat width75" type="number" step="0.1" min="0" name="months
 print '</td>';
 print '<td><label>'.$langs->trans('CreditReportForecastClientStatus').'</label><br>';
 print '<select name="search_client_status" class="flat maxwidth200">';
-print '<option value=""'.($search_client_status === '' ? ' selected' : '').'>'.$langs->trans('All').'</option>';
+print '<option value=""'.($search_client_status === '' ? ' selected' : '').'></option>';
 print '<option value="1"'.((string) $search_client_status === '1' ? ' selected' : '').'>'.$langs->trans('InActivity').'</option>';
 print '<option value="0"'.((string) $search_client_status === '0' ? ' selected' : '').'>'.$langs->trans('ActivityCeased').'</option>';
 print '</select></td>';

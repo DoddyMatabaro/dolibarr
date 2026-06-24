@@ -376,7 +376,7 @@ print $formproject->select_projects($search_socid > 0 ? $search_socid : -1, $sea
 print '</td><td>';
 $sqlTypes = 'SELECT rowid, code FROM '.$db->prefix().'credits_types WHERE entity IN ('.$entityType.') AND active = 1 ORDER BY code';
 $resTypes = $db->query($sqlTypes);
-print '<select name="search_credit_type" class="flat maxwidth200"><option value="0">'.$langs->trans('All').'</option>';
+print '<select name="search_credit_type" class="flat maxwidth200"><option value="0"></option>';
 if ($resTypes) {
 	while ($t = $db->fetch_object($resTypes)) {
 		$sel = ($search_credit_type > 0 && (int) $t->rowid === $search_credit_type) ? ' selected' : '';
