@@ -292,7 +292,7 @@ print '<input class="flat width75" type="number" step="0.1" min="0" max="200" na
 print '</td>';
 print '<td><label>'.$langs->trans('CreditReportBudgetUsageStatus').'</label><br>';
 print '<select name="usage_status" class="flat maxwidth200">';
-print '<option value=""'.($usage_status === '' ? ' selected' : '').'>'.$langs->trans('All').'</option>';
+print '<option value=""'.($usage_status === '' ? ' selected' : '').'></option>';
 print '<option value="ok"'.($usage_status === 'ok' ? ' selected' : '').'>'.$langs->trans('CreditReportBudgetStatusOk').'</option>';
 print '<option value="warning"'.($usage_status === 'warning' ? ' selected' : '').'>'.$langs->trans('CreditReportBudgetStatusWarning').'</option>';
 print '<option value="over"'.($usage_status === 'over' ? ' selected' : '').'>'.$langs->trans('CreditReportBudgetStatusOver').'</option>';

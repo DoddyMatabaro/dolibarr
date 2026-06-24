@@ -403,7 +403,7 @@ print $form->selectDate($date_end, 'date_end_', 0, 0, 1, '', 1, 0, 0, '', '', ''
 print '</td>';
 print '<td><label>'.$langs->trans('CreditReportMovementType').'</label><br>';
 print '<select name="movement_type" class="flat maxwidth120">';
-print '<option value=""'.($movement_type === '' ? ' selected' : '').'>'.$langs->trans('All').'</option>';
+print '<option value=""'.($movement_type === '' ? ' selected' : '').'></option>';
 print '<option value="credit"'.($movement_type === 'credit' ? ' selected' : '').'>'.$langs->trans('Credit').'</option>';
 print '<option value="debit"'.($movement_type === 'debit' ? ' selected' : '').'>'.$langs->trans('Debit').'</option>';
 print '</select></td>';
