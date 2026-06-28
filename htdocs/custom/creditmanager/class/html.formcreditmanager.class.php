@@ -110,7 +110,6 @@ class FormCreditTypes extends Form
             }
         }
         $arrayForSelectCreditType = [];
-		$arrayForSelectCreditType[0] = $langs->trans("");
         foreach($arrayofAllCreditType as $credit) {
             $arrayForSelectCreditType[$credit['rowid']] = $langs->trans($credit["label"]);
         }

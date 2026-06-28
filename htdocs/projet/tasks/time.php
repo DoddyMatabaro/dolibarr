@@ -140,14 +140,13 @@ if (isModEnabled("creditmanager")) {
 	$groupOfCurrentUser = [];
 	foreach($groupslist as $group) {
 		$groupOfCurrentUser[] = $group->nom;
-		echo var_dump($group->nom);
 	}
 	if (in_array("Credit Manager - Staff",$groupOfCurrentUser)) {
-		$arrayOfCreditStatusOfTimeSpent = array(""=>$langs->trans(""), "DRAFT"=>$langs->trans("DRAFT"), "SUBMITTED"=>$langs->trans("SUBMITTED"));
+		$arrayOfCreditStatusOfTimeSpent = array("DRAFT"=>$langs->trans("DRAFT"), "SUBMITTED"=>$langs->trans("SUBMITTED"));
 	} elseif (in_array("Credit Manager - PM",$groupOfCurrentUser)) {
-		$arrayOfCreditStatusOfTimeSpent = array(""=>$langs->trans(""), "SUBMITTED"=>$langs->trans("SUBMITTED"), "APPROVED"=>$langs->trans("APPROVED"), "DEBITED"=>$langs->trans("DEBITED"), "REJECTED"=>$langs->trans("REJECTED"));
+		$arrayOfCreditStatusOfTimeSpent = array( "SUBMITTED"=>$langs->trans("SUBMITTED"), "APPROVED"=>$langs->trans("APPROVED"), "REJECTED"=>$langs->trans("REJECTED"));
 	} elseif (in_array("Credit Manager - Finance",$groupOfCurrentUser) || in_array("Credit Manager - Admin",$groupOfCurrentUser)) {
-		$arrayOfCreditStatusOfTimeSpent = array(""=>$langs->trans(""), "DRAFT"=>$langs->trans("DRAFT"), "SUBMITTED"=>$langs->trans("SUBMITTED"), "APPROVED"=>$langs->trans("APPROVED"), "DEBITED"=>$langs->trans("DEBITED"), "REJECTED"=>$langs->trans("REJECTED"));
+		$arrayOfCreditStatusOfTimeSpent = array("DRAFT"=>$langs->trans("DRAFT"), "SUBMITTED"=>$langs->trans("SUBMITTED"), "APPROVED"=>$langs->trans("APPROVED"), "REJECTED"=>$langs->trans("REJECTED"));
 	} else {
 		$arrayOfCreditStatusOfTimeSpent = [];
 	}
