@@ -287,7 +287,7 @@ if ($action === 'exportcsv') {
 					$o->origin_ref,
 					$o->socname,
 					$o->project_ref,
-					(string) round($h, 4),
+					(string) creditmanagerFormatAmountNum($h),
 					$o->type_code,
 					$mode,
 					$o->element_date ? dol_print_date($db->jdate($o->element_date), 'day') : '',
@@ -450,7 +450,7 @@ if ($resql) {
 		print '<td>'.dol_escape_htmltag($originRef).'</td>';
 		print '<td>'.dol_escape_htmltag($obj->socname).'</td>';
 		print '<td>'.dol_escape_htmltag($obj->project_ref.($obj->project_title ? ' — '.$obj->project_title : '')).'</td>';
-		print '<td class="right">'.price($h, 0, '', 1, -1, -1, 'h').'</td>';
+		print '<td class="right">'.creditmanagerFormatAmount($h).'</td>';
 		print '<td>'.dol_escape_htmltag($obj->type_code).'</td>';
 		print '<td>'.dol_escape_htmltag($debitMode).'</td>';
 		print '<td>'.dol_escape_htmltag($obj->login).'</td>';

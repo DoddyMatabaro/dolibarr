@@ -133,8 +133,8 @@ if ($action === 'exportcsv' && $socid > 0 && creditmanagerCanExport($user)) {
 					$obj->rowid,
 					$db->jdate($obj->date_movement) ? dol_print_date($db->jdate($obj->date_movement), 'dayhour') : '',
 					$obj->type_code . ' - ' . $obj->type_label,
-					price($obj->amount, 0, '', 1, -1, -1, 'h'),
-					isset($obj->balance_after) ? price($obj->balance_after, 0, '', 1, -1, -1, 'h') : '',
+					creditmanagerFormatAmountNum($obj->amount),
+					isset($obj->balance_after) ? creditmanagerFormatAmountNum($obj->balance_after) : '',
 					$obj->type_movement,
 					$obj->description,
 					$obj->login,
@@ -198,7 +198,7 @@ if ($action === 'exportpdf' && $socid > 0 && creditmanagerCanExport($user)) {
 		while ($obj = $db->fetch_object($resql)) {
 			$pdf->Cell(30, 6, dol_print_date($db->jdate($obj->date_movement), 'day'), 1, 0, 'L');
 			$pdf->Cell(40, 6, $obj->type_code, 1, 0, 'L');
-			$pdf->Cell(25, 6, price($obj->amount, 0, '', 1, -1, -1, 'h'), 1, 0, 'R');
+			$pdf->Cell(25, 6, creditmanagerFormatAmount($obj->amount), 1, 0, 'R');
 			$pdf->Cell(30, 6, $obj->type_movement, 1, 0, 'L');
 			$pdf->Cell(0, 6, dol_trunc($obj->description, 40), 1, 1, 'L');
 		}
@@ -279,7 +279,7 @@ if ($socid > 0) {
 		foreach ($balances as $objB) {
 			print '<tr class="oddeven">';
 			print '<td class="titlefield">' . dol_escape_htmltag($objB->code . ' - ' . $objB->label) . '</td>';
-			print '<td class="right"><strong>' . price($objB->balance, 0, '', 1, -1, -1, 'h') . '</strong></td>';
+			print '<td class="right"><strong>' . creditmanagerFormatAmount($objB->balance) . '</strong></td>';
 			print '</tr>';
 		}
 	} else {
@@ -331,7 +331,7 @@ if ($socid > 0) {
 			print '<tr class="oddeven">';
 			print '<td>' . dol_escape_htmltag($mo) . '</td>';
 			print '<td>' . $langs->trans("Total") . '</td>';
-			print '<td class="right">' . price($totalMo, 0, '', 1, -1, -1, 'h') . '</td>';
+			print '<td class="right">' . creditmanagerFormatAmount($totalMo) . '</td>';
 			print '<td></td></tr>';
 		}
 		if ($shown === 0) {
@@ -472,8 +472,8 @@ if ($socid > 0) {
 			print '<td>' . dol_print_date($db->jdate($obj->date_movement), 'dayhour') . '</td>';
 			print '<td>' . dol_escape_htmltag($obj->type_code . ' - ' . $obj->type_label) . '</td>';
 			$amountClass = $obj->amount >= 0 ? 'amount' : 'amountnegative';
-			print '<td class="right ' . $amountClass . '">' . price($obj->amount, 0, '', 1, -1, -1, 'h') . '</td>';
-			print '<td class="right">' . (isset($obj->balance_after) ? price($obj->balance_after, 0, '', 1, -1, -1, 'h') : '-') . '</td>';
+			print '<td class="right ' . $amountClass . '">' . creditmanagerFormatAmount($obj->amount) . '</td>';
+			print '<td class="right">' . (isset($obj->balance_after) ? creditmanagerFormatAmount($obj->balance_after) : '-') . '</td>';
 			print '<td>' . dol_escape_htmltag($obj->type_movement) . '</td>';
 			print '<td>' . dol_escape_htmltag($obj->description) . '</td>';
 			print '<td>' . dol_escape_htmltag($obj->login) . '</td>';

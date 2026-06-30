@@ -427,7 +427,7 @@ if ($action === 'exportcsv' && creditmanagerCanExport($user)) {
                     $obj->client_name,
                     $obj->type_code,
                     $obj->type_label,
-                    price($obj->amount, 0, '', 1, -1, -1, $conf->currency),
+                    creditmanagerFormatAmountNum($obj->amount),
                     $obj->login,
                     $obj->description,
                 ),
@@ -625,7 +625,7 @@ if ($search_socid > 0) {
             while ($objB = $db->fetch_object($resBal)) {
                 print '<tr class="oddeven">';
                 print '<td>' . dol_escape_htmltag($objB->code . ' - ' . $objB->label) . '</td>';
-                print '<td class="right">' . price($objB->balance, 0, '', 1, -1, -1, 'h') . '</td>';
+                print '<td class="right">' . creditmanagerFormatAmount($objB->balance) . '</td>';
                 print '</tr>';
             }
         } else {
@@ -807,7 +807,7 @@ if (!$resql) {
         print '<td>' . dol_escape_htmltag($obj->type_code . ' - ' . $obj->type_label) . '</td>';
 
         // Amount
-        print '<td class="right">' . price($obj->amount, 0, '', 1, -1, -1, 'h') . '</td>';
+        print '<td class="right">' . creditmanagerFormatAmount($obj->amount) . '</td>';
 
         // User
         print '<td>' . dol_escape_htmltag($obj->login) . '</td>';
@@ -860,7 +860,7 @@ if ($action === 'edit' && $attrid > 0) {
             print '<table class="noborder centpercent">';
             print '<tr class="liste_titre"><td>' . $langs->trans('Amount') . '</td><td>' . $langs->trans('Description') . '</td></tr>';
             print '<tr class="oddeven">';
-            print '<td><input type="text" name="amount" class="flat maxwidth100" value="' . price($obj->amount, 0, '', 1, -1, -1, 'h') . '"></td>';
+            print '<td><input type="text" name="amount" class="flat maxwidth100" value="' . creditmanagerFormatAmount($obj->amount, 1) . '"></td>';
             print '<td><input type="text" name="description" class="flat minwidth300" value="' . dol_escape_htmltag($obj->description) . '"></td>';
             print '</tr>';
             print '</table>';

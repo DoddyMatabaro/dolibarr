@@ -10,6 +10,16 @@
 class CreditGraph
 {
 	/**
+	 * @param float|string|null $value
+	 * @return float
+	 */
+	private function roundAmount($value)
+	{
+		dol_include_once('/custom/creditmanager/lib/creditmanager.lib.php');
+		return (float) creditmanagerFormatAmountNum($value);
+	}
+
+	/**
 	 * Monthly consumption chart.
 	 *
 	 * @param array<int,array<string,mixed>> $rows
@@ -28,7 +38,7 @@ class CreditGraph
 			if (!isset($series[$key])) {
 				$series[$key] = array();
 			}
-			$series[$key][$month] = (float) $row['consumed_hours'];
+			$series[$key][$month] = $this->roundAmount($row['consumed_hours']);
 		}
 
 		$labels = array_values($months);
@@ -100,7 +110,7 @@ class CreditGraph
 
 		foreach ($rows as $row) {
 			$labels[] = $row['socname'].' - '.$row['credit_code'];
-			$data[] = $row['months_remaining'] === null ? 0 : round((float) $row['months_remaining'], 2);
+			$data[] = $row['months_remaining'] === null ? 0 : $this->roundAmount($row['months_remaining']);
 			$status = $row['status'];
 			$colors[] = $status === 'critical' ? 'rgba(220,53,69,0.8)' : ($status === 'warning' ? 'rgba(255,193,7,0.8)' : 'rgba(40,167,69,0.8)');
 		}
@@ -178,8 +188,8 @@ class CreditGraph
 
 		foreach ($rows as $row) {
 			$labels[] = $row['socname'].' - '.$row['credit_code'];
-			$budget[] = (float) $row['budget_hours'];
-			$real[] = (float) $row['real_hours'];
+			$budget[] = $this->roundAmount($row['budget_hours']);
+			$real[] = $this->roundAmount($row['real_hours']);
 		}
 
 		return array(
@@ -228,7 +238,7 @@ class CreditGraph
 
 		foreach ($rows as $row) {
 			$labels[] = $row['socname'].' - '.$row['credit_code'];
-			$data[] = round((float) $row['usage_percent'], 2);
+			$data[] = $this->roundAmount($row['usage_percent']);
 		}
 
 		return array(
