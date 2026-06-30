@@ -351,7 +351,7 @@ foreach ($detailRows as $r) {
 		'Projet' => $r['project_ref'],
 		'Collaborateur' => $r['user_login'],
 		'Mouvement' => $r['type_movement'],
-		'Montant' => price2num($r['amount']),
+		'Montant' => creditmanagerFormatAmountNum($r['amount']),
 		'Description' => $r['description'],
 	);
 }
@@ -576,7 +576,7 @@ foreach ($visibleRows as $r) {
 	print '<td>'.dol_escape_htmltag($r['project_ref']).'</td>';
 	print '<td>'.dol_escape_htmltag($r['user_login']).'</td>';
 	print '<td>'.dol_escape_htmltag($r['type_movement']).'</td>';
-	print '<td class="right '.$cls.'">'.price($r['amount'], 0, '', 1, -1, -1, 'h').'</td>';
+	print '<td class="right '.$cls.'">'.creditmanagerFormatAmount($r['amount']).'</td>';
 	print '<td>'.dol_escape_htmltag($r['description']).'</td>';
 	print '</tr>';
 }

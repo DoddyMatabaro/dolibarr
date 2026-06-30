@@ -161,8 +161,8 @@ if ($action === 'exportcsv' && creditmanagerCanExport($user)) {
 					$db->jdate($obj->date_movement) ? dol_print_date($db->jdate($obj->date_movement), 'dayhour') : '',
 					$obj->socname,
 					$obj->type_code.' - '.$obj->type_label,
-					price2num($obj->amount),
-					isset($obj->balance_after) ? price2num($obj->balance_after) : '',
+					creditmanagerFormatAmountNum($obj->amount),
+					isset($obj->balance_after) ? creditmanagerFormatAmountNum($obj->balance_after) : '',
 					$obj->type_movement,
 					$obj->description,
 					$obj->login,
@@ -321,8 +321,8 @@ if ($resql) {
 		print '<td><a href="'.DOL_URL_ROOT.'/societe/card.php?socid='.((int) $obj->fk_soc).'">'.dol_escape_htmltag($obj->socname).'</a></td>';
 		print '<td>'.dol_escape_htmltag($obj->type_code.' - '.$obj->type_label).'</td>';
 		$amountClass = $obj->amount >= 0 ? 'amount' : 'amountnegative';
-		print '<td class="right '.$amountClass.'">'.price($obj->amount, 0, '', 1, -1, -1, 'h').'</td>';
-		print '<td class="right">'.(isset($obj->balance_after) ? price($obj->balance_after, 0, '', 1, -1, -1, 'h') : '-').'</td>';
+		print '<td class="right '.$amountClass.'">'.creditmanagerFormatAmount($obj->amount).'</td>';
+		print '<td class="right">'.(isset($obj->balance_after) ? creditmanagerFormatAmount($obj->balance_after) : '-').'</td>';
 		print '<td>'.dol_escape_htmltag($obj->type_movement).'</td>';
 		print '<td>'.dol_escape_htmltag($obj->description).'</td>';
 		print '<td>'.dol_escape_htmltag($obj->login).'</td>';

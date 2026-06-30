@@ -98,6 +98,12 @@ if ($action == 'setparam' && creditmanagerCanManageAdmin($user)) {
 		dolibarr_set_const($db, 'CREDITMANAGER_DEFAULT_DEBIT_DELAY', $default_delay, 'chaine', 0, '', $conf->entity);
 	}
 
+	// Decimal precision for amounts display (0-5)
+	$decimal_precision = GETPOSTINT('CREDITMANAGER_DECIMAL_PRECISION');
+	if ($decimal_precision >= 0 && $decimal_precision <= 5) {
+		dolibarr_set_const($db, 'CREDITMANAGER_DECIMAL_PRECISION', $decimal_precision, 'chaine', 0, '', $conf->entity);
+	}
+
 	// Enable client portal
 	$enable_portal = GETPOSTINT('CREDITMANAGER_ENABLE_CLIENT_PORTAL');
 	dolibarr_set_const($db, 'CREDITMANAGER_ENABLE_CLIENT_PORTAL', $enable_portal, 'chaine', 0, '', $conf->entity);
@@ -178,6 +184,20 @@ print '<td>';
 $currentDelay = getDolGlobalString('CREDITMANAGER_DEFAULT_DEBIT_DELAY', '30');
 print '<input type="number" name="CREDITMANAGER_DEFAULT_DEBIT_DELAY" value="'.dol_escape_htmltag($currentDelay).'" class="maxwidth100" min="1" max="365">';
 print ' <span class="opacitymedium">'.$langs->trans("DebitDelayDaysUnit").'</span>';
+print '</td>';
+print '</tr>';
+
+// Decimal precision for amounts
+print '<tr class="oddeven">';
+print '<td>'.$langs->trans("DecimalPrecision").'</td>';
+print '<td>';
+$currentPrecision = (int) getDolGlobalString('CREDITMANAGER_DECIMAL_PRECISION', '2');
+print '<select name="CREDITMANAGER_DECIMAL_PRECISION" class="flat maxwidth100">';
+for ($i = 0; $i <= 5; $i++) {
+	print '<option value="'.$i.'"'.($currentPrecision === $i ? ' selected' : '').'>'.$i.'</option>';
+}
+print '</select>';
+print ' <span class="opacitymedium">'.$langs->trans("DecimalPrecisionDesc").'</span>';
 print '</td>';
 print '</tr>';
 

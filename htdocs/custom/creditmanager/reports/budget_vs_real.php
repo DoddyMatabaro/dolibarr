@@ -138,11 +138,11 @@ foreach ($budgetRows as $r) {
 	$exportRows[] = array(
 		$langs->trans('ThirdParty') => $r['socname'],
 		$langs->trans('CreditReportGroupByCreditType') => $r['credit_code'].' - '.$r['credit_label'],
-		$langs->trans('CreditReportBudgetHours') => price2num($r['budget_hours']),
-		$langs->trans('CreditReportRealHours') => price2num($r['real_hours']),
-		$langs->trans('CreditReportDifference') => price2num($r['difference_hours']),
-		$langs->trans('CreditReportUsagePercent') => price2num($r['usage_percent']),
-		$langs->trans('CreditReportVariance') => price2num($r['variance_percent']),
+		$langs->trans('CreditReportBudgetHours') => creditmanagerFormatAmountNum($r['budget_hours']),
+		$langs->trans('CreditReportRealHours') => creditmanagerFormatAmountNum($r['real_hours']),
+		$langs->trans('CreditReportDifference') => creditmanagerFormatAmountNum($r['difference_hours']),
+		$langs->trans('CreditReportUsagePercent') => creditmanagerFormatAmountNum($r['usage_percent']),
+		$langs->trans('CreditReportVariance') => creditmanagerFormatAmountNum($r['variance_percent']),
 		$langs->trans('CreditReportForecastStatus') => $langs->trans('CreditReportBudgetStatus'.ucfirst($r['status'])),
 	);
 }
@@ -374,19 +374,19 @@ foreach ($budgetRows as $r) {
 	print '<td><a href="'.DOL_URL_ROOT.'/societe/card.php?socid='.((int) $r['fk_soc']).'">'.dol_escape_htmltag($r['socname']).'</a></td>';
 	print '<td>'.dol_escape_htmltag($r['credit_code'].' - '.$r['credit_label']).'</td>';
 	if ($show_col_budget) {
-		print '<td class="right">'.price($r['budget_hours'], 0, '', 1, -1, -1, 'h').'</td>';
+		print '<td class="right">'.creditmanagerFormatAmount($r['budget_hours']).'</td>';
 	}
 	if ($show_col_real) {
-		print '<td class="right">'.price($r['real_hours'], 0, '', 1, -1, -1, 'h').'</td>';
+		print '<td class="right">'.creditmanagerFormatAmount($r['real_hours']).'</td>';
 	}
 	if ($show_col_diff) {
-		print '<td class="right">'.price($r['difference_hours'], 0, '', 1, -1, -1, 'h').'</td>';
+		print '<td class="right">'.creditmanagerFormatAmount($r['difference_hours']).'</td>';
 	}
 	if ($show_col_usage) {
-		print '<td class="right">'.price($r['usage_percent'], 0, '', 1, 2).'%</td>';
+		print '<td class="right">'.creditmanagerFormatAmount($r['usage_percent']).'%</td>';
 	}
 	if ($show_col_variance) {
-		print '<td class="right">'.price($r['variance_percent'], 0, '', 1, 2).'%</td>';
+		print '<td class="right">'.creditmanagerFormatAmount($r['variance_percent']).'%</td>';
 	}
 	print '<td><span class="badge '.$statusClass.'">'.$langs->trans('CreditReportBudgetStatus'.ucfirst($r['status'])).'</span></td>';
 	print '<td class="center"><a class="button small" href="'.$_SERVER['PHP_SELF'].'?'.http_build_query($drillParams).'">'.$langs->trans('CreditReportDrillDown').'</a></td>';
@@ -418,10 +418,10 @@ if ($drill_soc > 0 && $drill_type > 0) {
 		}
 		print '<tr class="oddeven">';
 		print '<td>'.dol_escape_htmltag($m['month_key']).'</td>';
-		print '<td class="right">'.price($m['budget_hours'], 0, '', 1, -1, -1, 'h').'</td>';
-		print '<td class="right">'.price($m['real_hours'], 0, '', 1, -1, -1, 'h').'</td>';
-		print '<td class="right">'.price($m['difference_hours'], 0, '', 1, -1, -1, 'h').'</td>';
-		print '<td class="right">'.price($m['usage_percent'], 0, '', 1, 2).'%</td>';
+		print '<td class="right">'.creditmanagerFormatAmount($m['budget_hours']).'</td>';
+		print '<td class="right">'.creditmanagerFormatAmount($m['real_hours']).'</td>';
+		print '<td class="right">'.creditmanagerFormatAmount($m['difference_hours']).'</td>';
+		print '<td class="right">'.creditmanagerFormatAmount($m['usage_percent']).'%</td>';
 		print '<td><span class="badge '.$statusClass.'">'.$langs->trans('CreditReportBudgetStatus'.ucfirst($m['status'])).'</span></td>';
 		print '</tr>';
 	}

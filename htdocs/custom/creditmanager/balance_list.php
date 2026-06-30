@@ -153,7 +153,7 @@ if ($action === 'exportcsv' && creditmanagerCanExport($user)) {
 					$obj->socname,
 					$obj->code,
 					$obj->type_label,
-					price2num($obj->balance),
+					creditmanagerFormatAmountNum($obj->balance),
 					$db->jdate($obj->tms) ? dol_print_date($db->jdate($obj->tms), 'dayhour') : '',
 				), $csvSep);
 			}
@@ -264,7 +264,7 @@ print '<label><input type="checkbox" name="search_hide_zero" value="1"'.(!empty(
 print $langs->trans('CreditBalancesHideZero').'</label>';
 print '</td>';
 print '<td colspan="2" class="right">';
-print '<span class="opacitymedium">'.$langs->trans('Total').':</span> <strong>'.price($totalBalanceSum, 0, '', 1, -1, -1, 'h').'</strong>';
+print '<span class="opacitymedium">'.$langs->trans('Total').':</span> <strong>'.creditmanagerFormatAmount($totalBalanceSum).'</strong>';
 print '</td>';
 print '</tr>';
 print '</table>';
@@ -294,7 +294,7 @@ if ($resql) {
 		print '<tr class="oddeven">';
 		print '<td><a href="'.DOL_URL_ROOT.'/societe/card.php?socid='.((int) $obj->fk_soc).'">'.dol_escape_htmltag($obj->socname).'</a></td>';
 		print '<td>'.dol_escape_htmltag($obj->code.' - '.$obj->type_label).'</td>';
-		print '<td class="right"><strong>'.price($obj->balance, 0, '', 1, -1, -1, 'h').'</strong></td>';
+		print '<td class="right"><strong>'.creditmanagerFormatAmount($obj->balance).'</strong></td>';
 		print '<td>'.($db->jdate($obj->tms) ? dol_print_date($db->jdate($obj->tms), 'dayhour') : '').'</td>';
 		print '<td class="center nowrap">';
 		print '<a class="paddingright" href="'.$linkCreditsTab.'?socid='.((int) $obj->fk_soc).'" title="'.dol_escape_htmltag($langs->trans('Credits')).'">'.img_picto('', 'company').'</a>';

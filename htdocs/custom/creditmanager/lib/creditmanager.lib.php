@@ -22,6 +22,96 @@
  */
 
 /**
+ * Configured decimal precision for credit amounts (0-5, default 2).
+ *
+ * @return int
+ */
+function creditmanagerGetDecimalPrecision()
+{
+	$precision = (int) getDolGlobalString('CREDITMANAGER_DECIMAL_PRECISION', '2');
+	if ($precision < 0) {
+		$precision = 0;
+	}
+	if ($precision > 5) {
+		$precision = 5;
+	}
+	return $precision;
+}
+
+/**
+ * Remove trailing decimal zeros from a formatted amount (30,00 → 30).
+ *
+ * @param string $formatted
+ * @return string
+ */
+function creditmanagerTrimAmountDisplayDecimals($formatted)
+{
+	global $langs;
+
+	if ($formatted === '' || !is_string($formatted)) {
+		return (string) $formatted;
+	}
+
+	$decSep = ',';
+	if ($langs->transnoentitiesnoconv('SeparatorDecimal') != 'SeparatorDecimal') {
+		$decSep = $langs->transnoentitiesnoconv('SeparatorDecimal');
+	}
+	if ($decSep === '' || strpos($formatted, $decSep) === false) {
+		return $formatted;
+	}
+
+	$suffix = '';
+	if (preg_match('/(\.\.\.)$/', $formatted, $m)) {
+		$suffix = $m[1];
+		$formatted = substr($formatted, 0, -strlen($suffix));
+	}
+
+	$pos = strrpos($formatted, $decSep);
+	if ($pos === false) {
+		return $formatted.$suffix;
+	}
+
+	$intPart = substr($formatted, 0, $pos);
+	$decPart = rtrim(substr($formatted, $pos + strlen($decSep)), '0');
+	if ($decPart === '') {
+		return $intPart.$suffix;
+	}
+
+	return $intPart.$decSep.$decPart.$suffix;
+}
+
+/**
+ * Format credit amount/hours for HTML display.
+ *
+ * @param float|string|null $amount
+ * @param int               $form 1 = input-friendly format
+ * @return string
+ */
+function creditmanagerFormatAmount($amount, $form = 0)
+{
+	$dec = creditmanagerGetDecimalPrecision();
+	return creditmanagerTrimAmountDisplayDecimals(price($amount, $form, '', 1, $dec, $dec));
+}
+
+/**
+ * Round credit amount for exports and machine-readable output.
+ *
+ * @param float|string|null $amount
+ * @return float|string
+ */
+function creditmanagerFormatAmountNum($amount)
+{
+	if ($amount === '' || $amount === null) {
+		return '';
+	}
+	$rounded = round((float) $amount, creditmanagerGetDecimalPrecision());
+	if (abs($rounded - round($rounded)) < 0.0000001) {
+		return (int) round($rounded);
+	}
+	return $rounded;
+}
+
+/**
  * Force all Credit Manager left menu entries to the same level as Dashboard (Menubase::menuLeftCharger adds them with level 0 when fk_menu=-1 and fk_leftmenu is empty).
  * If fk_menu points to another left entry, Eldy shows those lines as level > 0 and omits pictos.
  *

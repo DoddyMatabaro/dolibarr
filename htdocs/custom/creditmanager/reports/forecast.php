@@ -119,9 +119,9 @@ foreach ($forecastRows as $r) {
 	$exportRows[] = array(
 		$langs->trans('ThirdParty') => $r['socname'],
 		$langs->trans('CreditReportGroupByCreditType') => $r['credit_code'].' - '.$r['credit_label'],
-		$langs->trans('CreditReportForecastCurrentBalance') => price2num($r['current_balance']),
-		$langs->trans('CreditReportForecastAvgConsumption') => price2num($r['avg_monthly_consumption']),
-		$langs->trans('CreditReportForecastMonthsRemaining') => $r['months_remaining'] === null ? '' : price2num($r['months_remaining']),
+		$langs->trans('CreditReportForecastCurrentBalance') => creditmanagerFormatAmountNum($r['current_balance']),
+		$langs->trans('CreditReportForecastAvgConsumption') => creditmanagerFormatAmountNum($r['avg_monthly_consumption']),
+		$langs->trans('CreditReportForecastMonthsRemaining') => $r['months_remaining'] === null ? '' : creditmanagerFormatAmountNum($r['months_remaining']),
 		$langs->trans('CreditReportForecastStatus') => $langs->trans('CreditReportForecastStatus'.ucfirst($r['status'])),
 	);
 }
@@ -367,9 +367,9 @@ foreach ($forecastRows as $r) {
 	print '<tr class="oddeven">';
 	print '<td><a href="'.DOL_URL_ROOT.'/societe/card.php?socid='.((int) $r['fk_soc']).'">'.dol_escape_htmltag($r['socname']).'</a></td>';
 	print '<td>'.dol_escape_htmltag($r['credit_code'].' - '.$r['credit_label']).'</td>';
-	print '<td class="right">'.price($r['current_balance'], 0, '', 1, -1, -1, 'h').'</td>';
-	print '<td class="right">'.price($r['avg_monthly_consumption'], 0, '', 1, -1, -1, 'h').'</td>';
-	print '<td class="right">'.($r['months_remaining'] === null ? '-' : price($r['months_remaining'], 0, '', 1, -1, -1)).'</td>';
+	print '<td class="right">'.creditmanagerFormatAmount($r['current_balance']).'</td>';
+	print '<td class="right">'.creditmanagerFormatAmount($r['avg_monthly_consumption']).'</td>';
+	print '<td class="right">'.($r['months_remaining'] === null ? '-' : creditmanagerFormatAmount($r['months_remaining'])).'</td>';
 	print '<td><span class="badge '.$statusClass.'">'.$langs->trans('CreditReportForecastStatus'.ucfirst($r['status'])).'</span></td>';
 	print '</tr>';
 }
