@@ -364,6 +364,98 @@ function creditmanagerCanAccessReports($user)
 }
 
 /**
+ * Access to balances, movements and other financial client data (not staff).
+ *
+ * @param User $user
+ * @return bool
+ */
+function creditmanagerCanViewFinancialData($user)
+{
+	return creditmanagerCanAccessReports($user);
+}
+
+/**
+ * Menu enabled expression for financial pages (balances, movements, reports).
+ *
+ * @return string
+ */
+function creditmanagerFinancialMenuEnabledExpr()
+{
+	return 'isModEnabled("creditmanager") && ($user->hasRight("creditmanager","creditmanager_admin") || $user->hasRight("creditmanager","reports_export") || $user->hasRight("creditmanager","attribution_manage") || $user->hasRight("creditmanager","timesheet_approve") || $user->hasRight("creditmanager","timesheet_manual_debit") || $user->hasRight("creditmanager","client_portal_read") || $user->hasRight("creditmanager","creditmanager_client"))';
+}
+
+/**
+ * Validate / force client filter from financial scope (list pages).
+ *
+ * @param array $scope
+ * @param int   $search_socid
+ * @param DoliDB $db
+ * @return void
+ */
+function creditmanagerValidateFinancialScopeSocId($scope, &$search_socid, DoliDB $db)
+{
+	if (empty($scope['type']) || $scope['type'] === 'all') {
+		return;
+	}
+	if ($scope['type'] === 'client' && !empty($scope['fk_soc'])) {
+		$search_socid = (int) $scope['fk_soc'];
+		return;
+	}
+	if ($scope['type'] === 'pm') {
+		if ($search_socid > 0 && !creditmanagerReportCanAccessSoc($scope, $search_socid, $db)) {
+			accessforbidden();
+		}
+		return;
+	}
+	accessforbidden();
+}
+
+/**
+ * Third-party select limited to financial scope (PM / client).
+ *
+ * @param Form   $form
+ * @param DoliDB $db
+ * @param array  $scope
+ * @param int    $selected
+ * @param string $htmlname
+ * @param string $entitySoc
+ * @return void
+ */
+function creditmanagerPrintScopedCompanySelect($form, DoliDB $db, $scope, $selected, $htmlname, $entitySoc)
+{
+	require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
+
+	if (empty($scope['type']) || $scope['type'] === 'all') {
+		print $form->select_company($selected, $htmlname, '', 1, 0, 0, array(), 0, 'minwidth200', '', 0, 0, array(), false);
+		return;
+	}
+
+	$allowed = creditmanagerGetReportScopeSocIdsForSelect($db, $scope, $entitySoc);
+	if ($scope['type'] === 'client' && count($allowed) === 1) {
+		$soc = new Societe($db);
+		if ($soc->fetch($allowed[0]) > 0) {
+			print dol_escape_htmltag($soc->name);
+			print '<input type="hidden" name="'.dol_escape_htmltag($htmlname).'" value="'.((int) $allowed[0]).'">';
+		}
+		return;
+	}
+
+	print '<select name="'.dol_escape_htmltag($htmlname).'" class="flat minwidth200">';
+	print '<option value="0"></option>';
+	if (!empty($allowed)) {
+		$res = $db->query('SELECT rowid, nom FROM '.MAIN_DB_PREFIX.'societe WHERE rowid IN ('.implode(',', array_map('intval', $allowed)).') ORDER BY nom');
+		if ($res) {
+			while ($obj = $db->fetch_object($res)) {
+				$sel = ((int) $selected === (int) $obj->rowid) ? ' selected' : '';
+				print '<option value="'.((int) $obj->rowid).'"'.$sel.'>'.dol_escape_htmltag($obj->nom).'</option>';
+			}
+			$db->free($res);
+		}
+	}
+	print '</select>';
+}
+
+/**
  * Report data scope: all (admin/finance), pm (projects), client (own soc).
  *
  * @param DoliDB $db
@@ -648,5 +740,5 @@ function creditmanagerReportCanAccessSoc($scope, $fk_soc, DoliDB $db = null)
  */
 function creditmanagerReportsMenuEnabledExpr()
 {
-	return 'isModEnabled("creditmanager") && ($user->hasRight("creditmanager","creditmanager_admin") || $user->hasRight("creditmanager","reports_export") || $user->hasRight("creditmanager","attribution_manage") || $user->hasRight("creditmanager","timesheet_approve") || $user->hasRight("creditmanager","timesheet_manual_debit") || $user->hasRight("creditmanager","client_portal_read") || $user->hasRight("creditmanager","creditmanager_client"))';
+	return creditmanagerFinancialMenuEnabledExpr();
 }

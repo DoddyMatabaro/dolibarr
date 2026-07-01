@@ -62,7 +62,7 @@ class modCreditManager extends DolibarrModules
 
 		// Tabs for thirdparty (client card)
 		$this->tabs = array(
-			'thirdparty:+creditmanager:Credits:creditmanager:empty($user->socid) && $user->hasRight("creditmanager","read"):/custom/creditmanager/tabs/thirdpartyCredits.php?socid=__ID__',
+			'thirdparty:+creditmanager:Credits:creditmanager:(empty($user->socid) && ($user->hasRight("creditmanager","creditmanager_admin") || $user->hasRight("creditmanager","reports_export") || $user->hasRight("creditmanager","attribution_manage") || $user->hasRight("creditmanager","timesheet_approve") || $user->hasRight("creditmanager","timesheet_manual_debit"))) || (!empty($user->socid) && ($user->hasRight("creditmanager","client_portal_read") || $user->hasRight("creditmanager","creditmanager_client"))):/custom/creditmanager/tabs/thirdpartyCredits.php?socid=__ID__',
 		);
 
 		$this->rights = array();
@@ -185,6 +185,9 @@ class modCreditManager extends DolibarrModules
 			'user'     => 2,
 		);
 
+		require_once DOL_DOCUMENT_ROOT.'/custom/creditmanager/lib/creditmanager.lib.php';
+		$reportsMenuEnabled = creditmanagerFinancialMenuEnabledExpr();
+
 		// Left menu - Balances
 		$this->menu[$r++] = array(
 			'fk_menu'  => 'fk_mainmenu=creditmanager',
@@ -196,7 +199,7 @@ class modCreditManager extends DolibarrModules
 			'url'      => '/custom/creditmanager/balance_list.php',
 			'langs'    => 'creditmanager@creditmanager',
 			'position' => 1010,
-			'enabled'  => 'isModEnabled("creditmanager") && $user->hasRight("creditmanager","read")',
+			'enabled'  => $reportsMenuEnabled,
 			'perms'    => '1',
 			'target'   => '',
 			'user'     => 2,
@@ -213,13 +216,11 @@ class modCreditManager extends DolibarrModules
 			'url'      => '/custom/creditmanager/movement_list.php',
 			'langs'    => 'creditmanager@creditmanager',
 			'position' => 1020,
-			'enabled'  => 'isModEnabled("creditmanager") && $user->hasRight("creditmanager","read")',
+			'enabled'  => $reportsMenuEnabled,
 			'perms'    => '1',
 			'target'   => '',
 			'user'     => 2,
 		);
-
-		$reportsMenuEnabled = 'isModEnabled("creditmanager") && ($user->hasRight("creditmanager","creditmanager_admin") || $user->hasRight("creditmanager","reports_export") || $user->hasRight("creditmanager","attribution_manage") || $user->hasRight("creditmanager","timesheet_approve") || $user->hasRight("creditmanager","timesheet_manual_debit") || $user->hasRight("creditmanager","client_portal_read") || $user->hasRight("creditmanager","creditmanager_client"))';
 
 		// Left menu - Consumption report
 		$this->menu[$r++] = array(
@@ -300,7 +301,7 @@ class modCreditManager extends DolibarrModules
 			'url'      => '/custom/creditmanager/alert_list.php',
 			'langs'    => 'creditmanager@creditmanager',
 			'position' => 1030,
-			'enabled'  => 'isModEnabled("creditmanager") && $user->hasRight("creditmanager","read")',
+			'enabled'  => $reportsMenuEnabled,
 			'perms'    => '1',
 			'target'   => '',
 			'user'     => 2,
