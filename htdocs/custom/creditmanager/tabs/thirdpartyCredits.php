@@ -63,13 +63,22 @@ if (!$sortfield) {
 }
 
 // Access control
-if (!creditmanagerCanReadModule($user) && !creditmanagerCanReadClientPortal($user)) {
+if (!creditmanagerCanViewFinancialData($user) && !creditmanagerCanReadClientPortal($user)) {
 	accessforbidden();
 	exit;
 }
 
+$financialScope = creditmanagerGetReportScope($db, $user);
+
 $object = new Societe($db);
 if ($socid > 0) {
+	if (!creditmanagerCanViewFinancialData($user)) {
+		if (empty($user->socid) || (int) $user->socid !== (int) $socid) {
+			accessforbidden();
+		}
+	} elseif ($financialScope['type'] !== 'all' && !creditmanagerReportCanAccessSoc($financialScope, $socid, $db)) {
+		accessforbidden();
+	}
 	$object->fetch($socid);
 }
 

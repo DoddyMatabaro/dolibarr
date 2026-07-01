@@ -34,6 +34,7 @@ if (!$res) {
 /** @var User $user */
 
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.form.class.php';
+require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT.'/custom/creditmanager/lib/creditmanager.lib.php';
 
 creditmanagerEnsureLeftMenuFlat($db);
@@ -41,6 +42,14 @@ creditmanagerEnsureLeftMenuFlat($db);
 $langs->loadLangs(array("companies", "compta", "creditmanager@creditmanager"));
 
 if (!creditmanagerCanReadModule($user)) {
+	accessforbidden();
+}
+if (!creditmanagerCanViewFinancialData($user)) {
+	accessforbidden();
+}
+
+$financialScope = creditmanagerGetReportScope($db, $user);
+if ($financialScope['type'] === 'none') {
 	accessforbidden();
 }
 
@@ -123,8 +132,13 @@ function creditmanager_movement_sql_where($db, $filters)
 	if (!empty($filters['search_desc'])) {
 		$sql .= natural_search(array('m.description', 't.code', 't.label'), $filters['search_desc']);
 	}
+	if (!empty($filters['scope']) && is_array($filters['scope']) && !empty($filters['scope']['type']) && $filters['scope']['type'] !== 'all') {
+		$sql .= creditmanagerReportScopeBalanceWhereSql($filters['scope'], 'm');
+	}
 	return $sql;
 }
+
+creditmanagerValidateFinancialScopeSocId($financialScope, $search_socid, $db);
 
 $filters = array(
 	'fk_soc' => $search_socid > 0 ? $search_socid : 0,
@@ -133,6 +147,7 @@ $filters = array(
 	'date_start' => $search_date_start,
 	'date_end' => $search_date_end,
 	'search_desc' => $search_desc,
+	'scope' => $financialScope,
 );
 $whereSql = creditmanager_movement_sql_where($db, $filters);
 
@@ -254,7 +269,7 @@ print '<th class="right">'.$langs->trans('CreditManagerActions').'</th>';
 print '</tr>';
 print '<tr class="oddeven">';
 print '<td>';
-print $form->select_company($search_socid, 'search_socid', '', 1, 0, 0, array(), 0, 'minwidth200', '', 0, 0, array(), false);
+creditmanagerPrintScopedCompanySelect($form, $db, $financialScope, $search_socid, 'search_socid', $entitySoc);
 print '</td>';
 print '<td>';
 $sqlTypes = 'SELECT rowid, code, label FROM '.MAIN_DB_PREFIX.'credits_types';

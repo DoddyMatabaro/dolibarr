@@ -34,6 +34,7 @@ if (!$res) {
 /** @var User $user */
 
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.form.class.php';
+require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT.'/custom/creditmanager/lib/creditmanager.lib.php';
 
 creditmanagerEnsureLeftMenuFlat($db);
@@ -41,6 +42,14 @@ creditmanagerEnsureLeftMenuFlat($db);
 $langs->loadLangs(array("companies", "compta", "creditmanager@creditmanager"));
 
 if (!creditmanagerCanReadModule($user)) {
+	accessforbidden();
+}
+if (!creditmanagerCanViewFinancialData($user)) {
+	accessforbidden();
+}
+
+$financialScope = creditmanagerGetReportScope($db, $user);
+if ($financialScope['type'] === 'none') {
 	accessforbidden();
 }
 
@@ -87,7 +96,7 @@ $entityType = getEntity('credits_type');
  * @param int    $search_hide_zero
  * @return string
  */
-function creditmanager_balance_list_where($db, $search_socid, $search_credit_type, $search_hide_zero)
+function creditmanager_balance_list_where($db, $search_socid, $search_credit_type, $search_hide_zero, $scope = null)
 {
 	global $entityBalance, $entitySoc, $entityType;
 
@@ -104,6 +113,9 @@ function creditmanager_balance_list_where($db, $search_socid, $search_credit_typ
 	}
 	if (!empty($search_hide_zero)) {
 		$sql .= " AND ABS(b.balance) > 0.00001";
+	}
+	if (is_array($scope) && !empty($scope['type']) && $scope['type'] !== 'all') {
+		$sql .= creditmanagerReportScopeBalanceWhereSql($scope, 'b');
 	}
 	return $sql;
 }
@@ -128,7 +140,9 @@ function creditmanager_balance_sum_total($db, $sqlFromWhere)
 	return 0;
 }
 
-$whereBase = creditmanager_balance_list_where($db, $search_socid, $search_credit_type, $search_hide_zero);
+creditmanagerValidateFinancialScopeSocId($financialScope, $search_socid, $db);
+
+$whereBase = creditmanager_balance_list_where($db, $search_socid, $search_credit_type, $search_hide_zero, $financialScope);
 
 if ($action === 'exportcsv' && creditmanagerCanExport($user)) {
 	$filename = 'credit_balances_'.dol_print_date(dol_now(), '%Y%m%d%H%M%S').'.csv';
@@ -234,7 +248,7 @@ print '<th class="right">'.$langs->trans('CreditManagerActions').'</th>';
 print '</tr>';
 print '<tr class="oddeven">';
 print '<td>';
-print $form->select_company($search_socid, 'search_socid', '', 1, 0, 0, array(), 0, 'minwidth200', '', 0, 0, array(), false);
+creditmanagerPrintScopedCompanySelect($form, $db, $financialScope, $search_socid, 'search_socid', $entitySoc);
 print '</td>';
 print '<td>';
 $sqlTypes = 'SELECT rowid, code, label FROM '.MAIN_DB_PREFIX.'credits_types';
