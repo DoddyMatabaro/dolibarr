@@ -112,6 +112,8 @@ $entityType = getEntity('credits_type');
  */
 function creditmanager_manual_debit_list_sql($db, $conf, $filters)
 {
+	global $user;
+
 	// List is driven only by llx_element_time + task/project (no llx_fichinter).
 	// Intervention context is carried by et.intervention_id / ref_ext on the row.
 	$sql = " FROM ".$db->prefix()."element_time AS et";
@@ -160,6 +162,8 @@ function creditmanager_manual_debit_list_sql($db, $conf, $filters)
 	if (!empty($filters['text'])) {
 		$sql .= natural_search(array('et.note', 'et.ref_ext', 'tsk.ref'), $filters['text']);
 	}
+
+	$sql .= creditmanagerTimesheetScopeProjectWhereSql($db, $user, 'pr');
 
 	return $sql;
 }
@@ -351,6 +355,9 @@ llxHeader('', $langs->trans('CreditManagerManualDebit'), '', '', 0, 0, '', '', '
 print load_fiche_titre($langs->trans('CreditManagerManualDebit'), '', 'object_credit@creditmanager');
 
 print '<div class="opacitymedium marginbottomonly">'.$langs->trans('CreditManagerManualDebitHelp').'</div>';
+if (creditmanagerCanApproveTimesheets($user)) {
+	print '<p class="marginbottomonly"><a href="'.dol_buildpath('/custom/creditmanager/timesheets/approve.php', 1).'">'.$langs->trans('CreditTimesheetApproveTitle').'</a> <span class="opacitymedium">('.$langs->trans('CreditTimesheetApproveLinkHint').')</span></p>';
+}
 
 print '<form method="GET" action="'.$_SERVER['PHP_SELF'].'" name="search_form_debit">';
 print '<input type="hidden" name="sortfield" value="'.dol_escape_htmltag($sortfield).'"/>';

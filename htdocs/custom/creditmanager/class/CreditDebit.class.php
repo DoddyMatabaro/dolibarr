@@ -270,6 +270,102 @@ class CreditDebit
 		return $this->updateTimesheetCreditFields($fk_element_time, $fields);
 	}
 
+	/**
+	 * Approve a submitted timesheet and optionally auto-debit.
+	 *
+	 * @param int $fk_element_time
+	 * @param int $fk_credit_type
+	 * @return int 1 if OK, <0 if KO
+	 */
+	public function approveTimesheet($fk_element_time, $fk_credit_type)
+	{
+		global $user;
+
+		$fk_element_time = (int) $fk_element_time;
+		$fk_credit_type = (int) $fk_credit_type;
+		if ($fk_element_time <= 0 || $fk_credit_type <= 0) {
+			$this->error = 'Invalid parameters';
+			return -1;
+		}
+
+		$sql = "SELECT rowid, credit_status FROM ".$this->db->prefix()."element_time";
+		$sql .= " WHERE rowid = ".$fk_element_time;
+		$resql = $this->db->query($sql);
+		if (!$resql || !($obj = $this->db->fetch_object($resql))) {
+			$this->error = 'Timesheet not found';
+			return -1;
+		}
+		$this->db->free($resql);
+
+		if (strtoupper(trim((string) $obj->credit_status)) !== 'SUBMITTED') {
+			$this->error = 'Timesheet is not in submitted status';
+			return -1;
+		}
+
+		if (!$this->updateTimesheetCreditFields($fk_element_time, array(
+			'fk_credit_type' => $fk_credit_type,
+			'credit_status' => 'APPROVED',
+			'credit_approval_date' => $this->db->idate(dol_now()),
+		))) {
+			return -1;
+		}
+
+		$creditType = new CreditType($this->db);
+		if ($creditType->fetch($fk_credit_type) > 0 && !empty($creditType->auto_debit)) {
+			$result = $this->debitCreditsFromTimesheet($fk_element_time, $fk_credit_type);
+			if ($result < 0) {
+				return -1;
+			}
+		}
+
+		return 1;
+	}
+
+	/**
+	 * Reject a submitted timesheet.
+	 *
+	 * @param int    $fk_element_time
+	 * @param string $comment
+	 * @return int 1 if OK, <0 if KO
+	 */
+	public function rejectTimesheet($fk_element_time, $comment = '')
+	{
+		$fk_element_time = (int) $fk_element_time;
+		if ($fk_element_time <= 0) {
+			$this->error = 'Invalid parameters';
+			return -1;
+		}
+
+		$sql = "SELECT rowid, credit_status, note FROM ".$this->db->prefix()."element_time";
+		$sql .= " WHERE rowid = ".$fk_element_time;
+		$resql = $this->db->query($sql);
+		if (!$resql || !($obj = $this->db->fetch_object($resql))) {
+			$this->error = 'Timesheet not found';
+			return -1;
+		}
+		$this->db->free($resql);
+
+		if (strtoupper(trim((string) $obj->credit_status)) !== 'SUBMITTED') {
+			$this->error = 'Timesheet is not in submitted status';
+			return -1;
+		}
+
+		$fields = array(
+			'credit_status' => 'REJECTED',
+			'fk_credit_type' => null,
+		);
+		if ($comment !== '') {
+			$note = trim((string) $obj->note);
+			$fields['note'] = ($note !== '' ? $note."\n" : '').$comment;
+		}
+
+		if (!$this->updateTimesheetCreditFields($fk_element_time, $fields)) {
+			return -1;
+		}
+
+		return 1;
+	}
+
 	public function hasActiveDebit($fk_element_time)
 	{
 		$sql  = "SELECT rowid FROM ".$this->db->prefix()."credits_movements";

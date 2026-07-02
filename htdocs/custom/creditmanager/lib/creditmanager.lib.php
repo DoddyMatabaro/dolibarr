@@ -337,6 +337,44 @@ function creditmanagerIsClientPortalUser($user)
 }
 
 /**
+ * PM / admin can approve submitted timesheets.
+ *
+ * @param User $user
+ * @return bool
+ */
+function creditmanagerCanApproveTimesheets($user)
+{
+	return creditmanagerCanManageAdmin($user) || !empty($user->rights->creditmanager->timesheet_approve);
+}
+
+/**
+ * Restrict timesheet lists to PM projects / client soc.
+ *
+ * @param DoliDB $db
+ * @param User $user
+ * @param string $projectAlias
+ * @return string
+ */
+function creditmanagerTimesheetScopeProjectWhereSql(DoliDB $db, $user, $projectAlias = 'pr')
+{
+	$scope = creditmanagerGetReportScope($db, $user);
+	if (empty($scope['type']) || $scope['type'] === 'all') {
+		return '';
+	}
+	if ($scope['type'] === 'client' && !empty($scope['fk_soc'])) {
+		return ' AND '.$projectAlias.'.fk_soc = '.((int) $scope['fk_soc']);
+	}
+	if ($scope['type'] === 'pm') {
+		$projectIds = !empty($scope['project_ids']) ? $scope['project_ids'] : array();
+		if (empty($projectIds)) {
+			return ' AND 1 = 0';
+		}
+		return ' AND '.$projectAlias.'.rowid IN ('.implode(',', array_map('intval', $projectIds)).')';
+	}
+	return ' AND 1 = 0';
+}
+
+/**
  * Access to advanced report pages (consumption, forecast, budget vs real).
  * Staff is excluded.
  *
